@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recovery Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;600;700&family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#050A1C; --bg2:#081129; --panel:#0B1533; --panel2:#0E1A3E; --edge:rgba(148,178,255,.13); --edge2:rgba(148,178,255,.22);
+  --text:#EEF3FF; --text2:#B4C1DE; --text3:#8492B4;
+  --cyan:#22D3EE; --blue:#3B82F6; --violet:#8B5CF6; --amber:#FBBF24; --orange:#F97316; --green:#34D399; --red:#F87171;
+  --grad:linear-gradient(100deg,#22D3EE 0%,#3B82F6 50%,#8B5CF6 100%);
+  --grad-a:linear-gradient(100deg,#FBBF24,#F97316);
+  --sans:"Sora",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans);font-size:15px;line-height:1.6;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;min-height:100vh;overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-2;background:
+  radial-gradient(900px 600px at 85% -10%,rgba(59,130,246,.28),transparent 60%),
+  radial-gradient(700px 500px at -10% 20%,rgba(139,92,246,.22),transparent 60%),
+  radial-gradient(800px 600px at 50% 120%,rgba(34,211,238,.16),transparent 60%),var(--bg)}
+body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(148,178,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(148,178,255,.06) 1px,transparent 1px);background-size:56px 56px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%);mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 80%)}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{letter-spacing:-.02em;font-weight:600;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
+.sr{position:absolute;left:-9999px}
+.gt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mono{font-family:var(--mono);letter-spacing:0}
+.hide{display:none!important}
+
+/* barra e menu */
+.top{position:sticky;top:0;z-index:10;background:rgba(5,10,28,.74);backdrop-filter:blur(14px) saturate(1.3);border-bottom:1px solid var(--edge)}
+.top .in{max-width:1240px;margin:0 auto;height:70px;padding:0 28px;display:flex;align-items:center;gap:22px}
+.logo{display:flex;align-items:center;gap:11px;font-weight:700;font-size:17px;white-space:nowrap;text-decoration:none;color:var(--text)}
+.logo svg{width:32px;height:32px;filter:drop-shadow(0 0 10px rgba(34,211,238,.55))}
+.nav{display:flex;align-items:center}
+.burger{display:none;align-items:center;gap:8px;padding:9px 13px;border-radius:12px;border:1px solid var(--edge2);background:rgba(148,178,255,.06);color:var(--text);font-weight:600;font-size:14px;cursor:pointer}
+.burger svg{width:18px;height:18px}
+.nav-list{display:flex;gap:2px;margin:0;padding:0;list-style:none;align-items:center}
+.nav-a{position:relative;display:inline-flex;align-items:center;gap:6px;padding:9px 12px 9px 14px;border:0;border-radius:10px;background:transparent;color:var(--text2);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.nav-a:hover{color:var(--text);background:rgba(148,178,255,.07)}
+.nav-a.on{color:var(--text);background:rgba(59,130,246,.14)}
+.nav-a.on:after{content:"";position:absolute;left:14px;right:14px;bottom:-15px;height:2px;border-radius:2px;background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.8)}
+.me{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text2);white-space:nowrap}
+.live{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border-radius:999px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.08);color:#A7F3D0;font-size:12.5px;font-weight:500}
+.live.off{border-color:var(--edge2);background:rgba(148,178,255,.06);color:var(--text2)}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.live.off i{background:var(--text3);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.demo{font-family:var(--mono);font-size:11.5px;color:#C4B5FD;border:1px solid rgba(139,92,246,.45);border-radius:6px;padding:2px 7px}
+.av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12.5px;color:#fff;background:var(--grad);box-shadow:0 0 16px rgba(59,130,246,.5)}
+
+main{max-width:1240px;margin:0 auto;padding:34px 28px 70px}
+.view{display:none;flex-direction:column;gap:24px}
+.view.on{display:flex;animation:in .45s ease both}
+@keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.label{font-family:var(--mono);font-size:12.5px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.label:before{content:"";width:18px;height:1px;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.head h1{font-size:36px;line-height:1.12;margin-top:10px}
+.head p{margin-top:10px;color:var(--text2);max-width:66ch;font-size:15.5px}
+.jump{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.jump span{font-family:var(--mono);font-size:12px;color:var(--text3);margin-right:4px}
+.jump a{display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--edge2);background:rgba(148,178,255,.05);color:var(--text);text-decoration:none;font-size:13px;font-weight:500}
+.jump a:hover{border-color:rgba(34,211,238,.55);background:rgba(34,211,238,.08)}
+.jump a i{font-style:normal;font-family:var(--mono);font-size:11px;color:#7DE7FB}
+.anchor{scroll-margin-top:96px}
+
+/* superfici */
+.panel{background:linear-gradient(180deg,rgba(14,26,62,.82),rgba(9,17,41,.82));border:1px solid var(--edge);border-radius:22px;padding:26px 28px;min-width:0;backdrop-filter:blur(8px);box-shadow:0 30px 60px -40px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.04)}
+.panel h2{font-size:20px}
+.panel h3{font-size:16px}
+.panel .sub{color:var(--text2);font-size:14px;margin-top:4px}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+.ring-live{border:1px solid transparent;background:linear-gradient(180deg,#0E1A3E,#091129) padding-box,conic-gradient(from var(--ang),rgba(34,211,238,.9),rgba(59,130,246,.12) 22%,rgba(139,92,246,.9) 50%,rgba(59,130,246,.12) 78%,rgba(34,211,238,.9)) border-box;animation:spin 9s linear infinite;box-shadow:0 30px 80px -30px rgba(59,130,246,.5)}
+.ring-static{border:1px solid transparent;background:linear-gradient(180deg,#0E1A3E,#091129) padding-box,linear-gradient(135deg,rgba(34,211,238,.7),rgba(59,130,246,.2) 40%,rgba(139,92,246,.7)) border-box}
+@keyframes spin{to{--ang:360deg}}
+.src{color:var(--text3);font-size:12.5px;margin-top:18px}
+.src a{color:var(--text2)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;padding:12px 18px;font-weight:600;font-size:14px;cursor:pointer;text-decoration:none;white-space:nowrap;transition:transform .15s,box-shadow .2s}
+.btn svg{width:18px;height:18px}
+.btn.pri{color:#fff;background:linear-gradient(100deg,#0EA5E9,#3B82F6 50%,#7C3AED);box-shadow:0 10px 30px -10px rgba(59,130,246,.8),inset 0 1px 0 rgba(255,255,255,.25)}
+.btn.pri:hover{transform:translateY(-1px)}
+.btn.ghost{color:var(--text);background:rgba(148,178,255,.06);border:1px solid var(--edge2)}
+.btn.ghost:hover{background:rgba(148,178,255,.12)}
+.btn.ok{color:#04261B;background:linear-gradient(100deg,#34D399,#22D3EE);box-shadow:0 10px 30px -12px rgba(52,211,153,.8)}
+.btn.danger{color:#FCA5A5;background:transparent;border:1px solid rgba(248,113,113,.35)}
+.btn.sm{padding:8px 13px;font-size:13px;border-radius:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{font-size:13.5px;color:var(--text2)} .msg.err{color:#FCA5A5} .msg.good{color:#6EE7B7}
+
+/* analizza */
+.intake{padding:30px 32px;border-radius:26px}
+.intake h2{font-size:24px}
+.drop{position:relative;margin-top:18px;border-radius:16px;overflow:hidden}
+.drop textarea{display:block;width:100%;min-height:250px;resize:vertical;border:1px dashed rgba(148,178,255,.35);border-radius:16px;padding:18px 20px;background:rgba(3,7,20,.65);color:#CFE0FF;font-family:var(--mono);font-size:12.8px;line-height:1.7}
+.drop textarea:focus{outline:none;border-color:rgba(34,211,238,.7);box-shadow:0 0 0 3px rgba(34,211,238,.12)}
+.drop textarea::placeholder{color:var(--text3);font-family:var(--sans);font-size:14.5px}
+.drop.drag textarea{border-color:var(--cyan);background:rgba(34,211,238,.06)}
+.drop .over{position:absolute;inset:0;display:none;place-items:center;font-weight:600;color:#7DE7FB;pointer-events:none;background:rgba(5,10,28,.6)}
+.drop.drag .over{display:grid}
+.scan{position:absolute;left:0;right:0;top:0;height:70px;pointer-events:none;opacity:0;background:linear-gradient(180deg,transparent,rgba(34,211,238,.18) 70%,rgba(34,211,238,.9) 98%,transparent);border-bottom:1px solid rgba(34,211,238,.9);box-shadow:0 6px 18px rgba(34,211,238,.5)}
+.drop.scanning .scan{opacity:1;animation:scan 1.6s linear infinite}
+@keyframes scan{from{transform:translateY(-70px)}to{transform:translateY(260px)}}
+.log{font-family:var(--mono);font-size:12.5px;color:#7DE7FB;min-height:20px;margin-top:12px}
+.ex{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.ex span{font-size:13px;color:var(--text3)}
+.ex button{border:1px solid var(--edge2);background:rgba(148,178,255,.05);color:var(--text);border-radius:999px;padding:6px 13px;font-size:13px;cursor:pointer}
+.ex button:hover{border-color:rgba(34,211,238,.55);background:rgba(34,211,238,.08)}
+.get{padding:20px;display:flex;flex-direction:column;gap:8px}
+.get .gi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#BFE9FF;background:linear-gradient(135deg,rgba(34,211,238,.2),rgba(139,92,246,.2));border:1px solid rgba(148,178,255,.18)}
+.get .gi svg{width:20px;height:20px}
+.get b{font-size:15px}
+.get span{font-size:13.5px;color:var(--text2)}
+.recent{display:flex;flex-direction:column}
+.rc{display:grid;grid-template-columns:40px minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--edge);cursor:pointer}
+.rc:first-child{border-top:0}
+.rc:hover b{color:#7DE7FB}
+.rc small{display:block;color:var(--text3);font-size:12.5px}
+.empty{color:var(--text3);font-size:14px;padding:6px 0}
+
+/* comuni: icone, tag, barre */
+.ico{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;color:#BFE9FF;background:linear-gradient(135deg,rgba(34,211,238,.18),rgba(139,92,246,.18));border:1px solid rgba(148,178,255,.18)}
+.ico svg{width:20px;height:20px}
+.tag{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-weight:600;font-size:12.5px;white-space:nowrap}
+.tag i{width:6px;height:6px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.tag.asta{color:#7DE7FB;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35)}
+.tag.acc{color:#FCD34D;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35)}
+.tag.wait{color:var(--text2);background:rgba(148,178,255,.06);border:1px solid var(--edge2)}
+.tag.ok{color:#6EE7B7;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.35)}
+.tag.ex{color:#C4B5FD;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);padding:3px 9px;font-size:11.5px}
+.tag.mine{color:#7DE7FB;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.3);padding:3px 9px;font-size:11.5px}
+.bar{height:6px;border-radius:4px;background:rgba(148,178,255,.12);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--grad);box-shadow:0 0 10px rgba(34,211,238,.6)}
+.bar i.a{background:var(--grad-a);box-shadow:0 0 10px rgba(251,191,36,.5)}
+.bar i.o{background:rgba(180,193,222,.45);box-shadow:none}
+
+/* scheda */
+.sh-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:18px;align-items:center}
+.sh-head .ico{width:58px;height:58px;border-radius:16px} .sh-head .ico svg{width:28px;height:28px}
+.sh-head h1{font-size:28px;line-height:1.15}
+.sh-head p{color:var(--text2);font-size:14px;margin-top:4px}
+.facts4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
+.facts4 div{border-radius:14px;padding:14px 16px;background:rgba(148,178,255,.05);border:1px solid var(--edge)}
+.facts4 small{display:block;font-size:12.5px;color:var(--text3)}
+.facts4 b{font-family:var(--mono);font-size:19px;font-weight:600}
+.verdict{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:0;border-radius:24px;overflow:hidden}
+.panel.verdict{padding:0}
+.vl{padding:28px 30px;position:relative;isolation:isolate}
+.vl:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(70% 110% at 0% 0%,rgba(34,211,238,.28),transparent 60%),radial-gradient(60% 100% at 100% 100%,rgba(139,92,246,.25),transparent 60%)}
+.verdict.acc .vl:before{background:radial-gradient(70% 110% at 0% 0%,rgba(251,191,36,.28),transparent 60%),radial-gradient(60% 100% at 100% 100%,rgba(249,115,22,.2),transparent 60%)}
+.vl small{font-family:var(--mono);font-size:12.5px;color:var(--text2)}
+.vl h2{font-size:36px;font-weight:700;letter-spacing:-.035em;line-height:1.08;margin-top:8px}
+.vl p{color:var(--text2);margin-top:8px;max-width:46ch}
+.vgauge{display:flex;align-items:center;gap:20px;margin-top:22px}
+.vgauge .g{position:relative;width:132px;height:132px;flex:none}
+.vgauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.vgauge .g div{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.vgauge .g b{font-size:32px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.vgauge .g small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--text3);margin-top:3px}
+.vgauge p{margin:0;font-size:14.5px;color:var(--text2)} .vgauge p b{color:var(--text)}
+.vr{padding:28px 30px;border-left:1px solid var(--edge);display:flex;flex-direction:column;gap:12px;background:rgba(3,7,20,.25)}
+.vr h3{font-size:15px;font-weight:600;color:var(--text2)}
+.way{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 14px;align-items:center;padding:15px 17px;border-radius:16px;border:1px solid var(--edge2);background:rgba(3,7,20,.35)}
+.way.win{border-color:rgba(34,211,238,.6);background:rgba(34,211,238,.07);box-shadow:0 0 30px -12px rgba(34,211,238,.7)}
+.way.a.win{border-color:rgba(251,191,36,.6);background:rgba(251,191,36,.07);box-shadow:0 0 30px -12px rgba(251,191,36,.6)}
+.way b{font-size:15px;font-weight:600}
+.way .amt{font-family:var(--mono);font-size:21px;font-weight:600}
+.way .d{grid-column:1/-1;font-size:13px;color:var(--text2)}
+.way .bar{grid-column:1/-1;height:8px}
+.best{display:inline-block;margin-left:9px;font-family:var(--mono);font-size:11px;font-weight:600;color:#04202A;background:var(--grad);border-radius:6px;padding:2px 7px;vertical-align:2px}
+.way.a .best{background:var(--grad-a);color:#2A1700}
+.note{font-size:12.5px;color:var(--text3)}
+.charts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.chart{width:100%;height:auto;display:block;margin-top:6px}
+.chart text{font-family:var(--sans)}
+.key{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text2);margin-top:8px}
+.key span{display:inline-flex;gap:7px;align-items:center}
+.key i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.find{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.25);font-size:14px}
+.find.a{background:rgba(251,191,36,.06);border-color:rgba(251,191,36,.28)}
+.find b{color:var(--text)}
+.offer{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:16px}
+.offer label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text2);font-weight:500}
+.offer input{width:200px;border:1px solid var(--edge2);border-radius:12px;padding:10px 12px;background:rgba(3,7,20,.55);font-size:15px;font-family:var(--mono)}
+.crit{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.crit li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid var(--edge);background:rgba(3,7,20,.3);font-size:14px}
+.crit li i{font-style:normal;width:22px;height:22px;border-radius:7px;flex:none;display:grid;place-items:center;font-weight:700;font-size:13px;background:rgba(248,113,113,.12);color:#FCA5A5;border:1px solid rgba(248,113,113,.35)}
+.crit li.ok i{background:rgba(52,211,153,.12);color:#6EE7B7;border-color:rgba(52,211,153,.35)}
+.crit li small{display:block;color:var(--text3);font-family:var(--mono);font-size:12px;margin-top:2px}
+details.data{border-radius:22px}
+details.data>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px}
+details.data>summary::-webkit-details-marker{display:none}
+details.data>summary .chev{width:18px;height:18px;transition:transform .2s;color:var(--text2)}
+details.data[open]>summary .chev{transform:rotate(180deg)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+label.f{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:500;color:var(--text2)}
+label.f input,label.f select{border:1px solid var(--edge2);border-radius:12px;padding:11px 13px;background:rgba(3,7,20,.55);font-size:15px;color:var(--text)}
+label.f input:focus,label.f select:focus{border-color:rgba(34,211,238,.6);box-shadow:0 0 0 3px rgba(34,211,238,.12);outline:none}
+.q{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:14px;border:1px solid var(--edge2);cursor:pointer;background:rgba(3,7,20,.4)}
+.q:has(input:checked){border-color:rgba(34,211,238,.55);background:rgba(34,211,238,.07)}
+.q input{appearance:none;flex:none;width:38px;height:22px;border-radius:999px;background:rgba(148,178,255,.18);position:relative;cursor:pointer;margin:1px 0 0;transition:background .2s}
+.q input:before{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s}
+.q input:checked{background:var(--grad);box-shadow:0 0 12px rgba(34,211,238,.6)}
+.q input:checked:before{transform:translateX(16px)}
+.q b{display:block;font-size:14.5px;font-weight:600}
+.q em{display:block;font-style:normal;font-size:12.8px;color:var(--text3);margin-top:3px}
+.q em.ev{color:#7DE7FB;font-family:var(--mono);font-size:12px}
+.dec{display:flex;flex-direction:column;gap:12px}
+.dec input{border:1px solid var(--edge2);border-radius:12px;padding:11px 13px;font-size:14px;background:rgba(3,7,20,.55)}
+.banner{display:flex;gap:12px;align-items:center;padding:12px 16px;border-radius:14px;border:1px solid rgba(139,92,246,.4);background:rgba(139,92,246,.08);font-size:14px;color:#DDD6FE}
+
+/* portafoglio */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.kpi{padding:22px 24px;display:flex;flex-direction:column;gap:6px}
+.kpi .k{font-size:13.5px;color:var(--text2);font-weight:500}
+.kpi b{font-size:30px;font-weight:700;letter-spacing:-.035em;line-height:1.15}
+.kpi span{font-size:13px;color:var(--text3)}
+.pcharts{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;align-items:stretch}
+.donutbox{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:8px}
+.donut{position:relative;width:190px;height:190px;flex:none}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.donut .c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.donut .c b{display:block;font-size:44px;font-weight:700;line-height:1;letter-spacing:-.04em}
+.donut .c small{font-family:var(--mono);font-size:11.5px;color:var(--text2)}
+.dleg{display:flex;flex-direction:column;gap:10px;font-size:14px;color:var(--text2)}
+.dleg div{display:flex;align-items:center;gap:10px}
+.dleg b{font-size:20px;color:var(--text);min-width:28px}
+.dleg i{width:11px;height:11px;border-radius:3px}
+.lh{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--edge2);border-radius:12px;padding:7px 12px;background:rgba(3,7,20,.45)}
+.search svg{width:16px;height:16px;color:var(--text3)}
+.search input{border:0;background:transparent;outline:none;width:190px;font-size:14px}
+.filt{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:rgba(148,178,255,.06);border:1px solid var(--edge)}
+.filt button{white-space:nowrap;border:0;background:transparent;color:var(--text2);padding:6px 12px;border-radius:9px;font-weight:500;font-size:13px;cursor:pointer}
+.filt button.on{background:rgba(59,130,246,.22);color:#fff;box-shadow:inset 0 0 0 1px rgba(59,130,246,.5)}
+.tw{overflow-x:auto;margin:20px -28px -26px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text3);padding:12px 10px;border-top:1px solid var(--edge);border-bottom:1px solid var(--edge);white-space:nowrap;background:rgba(148,178,255,.03)}
+th:first-child,td:first-child{padding-left:28px} th:last-child,td:last-child{padding-right:28px}
+td{padding:13px 10px;border-bottom:1px solid rgba(148,178,255,.07);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{cursor:pointer;transition:background .15s}
+tbody tr:hover td{background:rgba(59,130,246,.07)}
+.r{text-align:right} .nw{white-space:nowrap}
+.im{display:flex;align-items:center;gap:12px;min-width:250px}
+.im b{display:block;font-weight:600;white-space:nowrap} .im small{display:block;color:var(--text3);font-size:12.5px;white-space:nowrap} .im small .tag{margin-left:4px;vertical-align:1px}
+.pb{display:flex;align-items:center;gap:10px;min-width:110px}
+.pb .bar{flex:1}
+.pb span{font-size:13px;white-space:nowrap;min-width:40px;font-family:var(--mono);color:var(--text)}
+
+/* risultati e guida */
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+.facts div{border-radius:18px;padding:22px;background:rgba(148,178,255,.05);border:1px solid var(--edge)}
+.facts b{display:block;font-size:34px;font-weight:700;letter-spacing:-.035em}
+.facts span{display:block;margin-top:4px;color:var(--text2);font-size:14px}
+.big3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.big3 .panel{display:flex;flex-direction:column;gap:12px}
+.big3 h3{font-size:15px;font-weight:600;color:var(--text2)}
+.big3 .v{font-size:44px;font-weight:700;letter-spacing:-.04em;line-height:1}
+.big3 p{font-size:13.5px;color:var(--text3)}
+.vs{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.vs div{display:grid;grid-template-columns:62px minmax(0,1fr) 92px;gap:10px;align-items:center;font-size:13px;color:var(--text2)}
+.vs .bar{height:8px}
+.vs b{text-align:right;font-family:var(--mono);font-weight:600;color:var(--text)}
+.money{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:20px}
+.money div{border-radius:16px;padding:18px;background:rgba(148,178,255,.05);border:1px solid var(--edge)}
+.money small{display:block;font-size:13px;color:var(--text2)}
+.money b{font-family:var(--mono);font-size:22px;font-weight:600}
+.money .plus{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.07)} .money .plus b{color:#6EE7B7}
+.pipe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:22px;position:relative}
+.pipe:before{content:"";position:absolute;left:24px;right:24px;top:22px;height:2px;background:var(--grad);opacity:.6;box-shadow:0 0 10px rgba(34,211,238,.6)}
+.pipe div{position:relative;display:flex;flex-direction:column;gap:8px}
+.pipe .n{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-family:var(--mono);font-weight:600;background:var(--panel2);border:1px solid rgba(34,211,238,.5);color:#7DE7FB;box-shadow:0 0 18px rgba(34,211,238,.35)}
+.pipe b{font-size:15px;font-weight:600;margin-top:6px}
+.pipe span{font-size:13.5px;color:var(--text2)}
+details.tech{border-radius:18px;padding:16px 22px;background:rgba(148,178,255,.04);border:1px solid var(--edge)}
+details.tech summary{cursor:pointer;font-weight:600}
+details.tech p{margin-top:10px;color:var(--text2);font-size:14px}
+.guide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+ol.use{margin:20px 0 0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:18px}
+ol.use li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:14px}
+ol.use li:before{content:counter(s);width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-weight:600;background:var(--grad);color:#fff;box-shadow:0 0 12px rgba(59,130,246,.55)}
+ol.use b{display:block;font-weight:600}
+ol.use span{color:var(--text2);font-size:14px}
+dl{margin:20px 0 0}
+dl div{padding:13px 0;border-top:1px solid var(--edge)}
+dl div:first-child{border-top:0;padding-top:0}
+dt{font-weight:600}
+dd{margin:3px 0 0;color:var(--text2);font-size:14px}
+
+@media (max-width:1120px){.verdict,.charts,.pcharts{grid-template-columns:1fr}.vr{border-left:0;border-top:1px solid var(--edge)}.me .live{display:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.top .in{height:auto;flex-wrap:wrap;padding:12px 18px;gap:10px}
+  .nav{order:3;width:100%;flex-direction:column;align-items:stretch}.burger{display:inline-flex;align-self:flex-start}.nav-list{display:none;flex-direction:column;align-items:stretch;gap:6px;margin-top:10px;padding:10px;border-radius:16px;border:1px solid var(--edge2);background:#0B1533}.nav.open .nav-list{display:flex}.nav-a{width:100%;justify-content:space-between}.nav-a.on:after{display:none}
+  main{padding:24px 18px 50px}.big3,.facts,.guide{grid-template-columns:1fr}.money,.facts4,.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.pipe{grid-template-columns:1fr 1fr}.pipe:before{display:none}.head h1{font-size:28px}.vl h2{font-size:30px}}
+@media (max-width:620px){.grid2,.grid3,.kpis{grid-template-columns:1fr}.sh-head{grid-template-columns:auto 1fr}.sh-head .row{grid-column:1/-1}.ch-hide{display:none}.panel{padding:22px 20px}.intake{padding:22px 20px}.tw{margin:20px -20px -22px}th:first-child,td:first-child{padding-left:20px}th:last-child,td:last-child{padding-right:20px}.money,.pipe{grid-template-columns:1fr}.vl,.vr{padding:22px 20px}.vgauge{flex-direction:column;align-items:flex-start}.me .demo{display:none}.navcta{display:none}.search input{width:130px}}
+@media (prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+
+/* nome e indice */
+.wm{font-family:"Unbounded",var(--sans);letter-spacing:-.035em;line-height:1;display:inline-flex;align-items:baseline;white-space:nowrap}
+.wm b{font-weight:600;color:#F4F7FF}
+.wm i{font-style:normal;font-weight:300;margin-left:.06em;background:linear-gradient(100deg,#22D3EE,#3B82F6 30%,#8B5CF6 60%,#22D3EE 90%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sheen 7s linear infinite}
+@keyframes sheen{to{background-position:-220% 0}}
+.logo .wm{font-size:18px}
+.brandhero{display:flex;flex-direction:column;gap:14px;padding:18px 0 6px}
+.brandhero .wm{font-size:clamp(46px,8vw,92px)}
+.brandhero .wm i{filter:drop-shadow(0 0 26px rgba(59,130,246,.45))}
+.brandhero p{color:var(--text2);font-size:17px;max-width:62ch}
+.brandhero .tagline{font-family:var(--mono);font-size:13px;color:#7DE7FB;letter-spacing:.04em;display:flex;align-items:center;gap:10px}
+.brandhero .tagline:before{content:"";width:28px;height:1px;background:#22D3EE;box-shadow:0 0 8px #22D3EE}
+.sheet{display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;align-items:start}
+.toc{position:sticky;top:94px;display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:18px;border:1px solid var(--edge);background:rgba(9,17,41,.7);backdrop-filter:blur(8px)}
+.toc .t{font-family:var(--mono);font-size:11.5px;color:var(--text3);padding:4px 10px 8px}
+.toc a{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;color:var(--text2);text-decoration:none;font-size:13.5px;line-height:1.3}
+.toc a i{font-style:normal;font-family:var(--mono);font-size:11px;width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:7px;border:1px solid var(--edge2);color:var(--text3)}
+.toc a:hover{background:rgba(148,178,255,.07);color:var(--text)}
+.toc a.on{background:rgba(59,130,246,.16);color:var(--text)}
+.toc a.on i{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 0 10px rgba(59,130,246,.6)}
+.flow{display:flex;flex-direction:column;gap:22px;min-width:0}
+.qh{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.qh .qn{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-weight:600;font-size:13.5px;color:#fff;background:var(--grad);box-shadow:0 0 14px rgba(59,130,246,.55)}
+.qh h2{font-size:22px;line-height:1.2}
+.qh p{color:var(--text2);font-size:14px;margin-top:4px}
+.verdict .qh h2{font-size:22px}
+@media (max-width:1000px){.sheet{grid-template-columns:1fr}.toc{display:none}}
+
+.printhead{display:none;justify-content:space-between;align-items:center;border-bottom:2px solid #1d4ed8;padding-bottom:10px;margin-bottom:6px;font-size:12px;color:#3d4a63}
+.navcta{margin-left:6px}
+/* stampa: la scheda diventa un report chiaro su carta */
+@media print{
+  :root{--text:#0A1A33;--text2:#3d4a63;--text3:#5b6780;--edge:#d6dcea;--edge2:#c8d0e2}
+  body{background:#fff;color:#0A1A33}
+  body:before,body:after,.top,.noprint,.btn,.dec,.offer,.toc{display:none!important}
+  .sheet{display:block}.wm b{color:#0A1A33}.wm i{color:#1d4ed8;-webkit-text-fill-color:#1d4ed8;background:none;animation:none}
+  .printhead{display:flex!important}
+  main{padding:0;max-width:none}
+  .view{display:none!important}.view.on{display:flex!important;animation:none}
+  .panel,.ring-live,.ring-static{background:#fff!important;border:1px solid #d6dcea!important;box-shadow:none!important;backdrop-filter:none;animation:none!important;break-inside:avoid}
+  .vl:before{display:none}.vr{background:#fff}
+  .gt{color:#1d4ed8;-webkit-text-fill-color:#1d4ed8;background:none}
+  .facts4 div,.way,.crit li,.find{background:#fff!important}
+  .chart text{fill:#0A1A33}.chart .pill{fill:#FEF3C7}
+  details.data{display:block}details.data>*{display:block}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset=".5" stop-color="#3B82F6"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient>
+    <linearGradient id="gB" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient>
+    <linearGradient id="gBar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B82F6" stop-opacity=".9"/><stop offset="1" stop-color="#3B82F6" stop-opacity=".25"/></linearGradient>
+    <linearGradient id="gBarOn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22D3EE"/><stop offset="1" stop-color="#8B5CF6" stop-opacity=".5"/></linearGradient>
+  </defs>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></symbol>
+  <symbol id="i-villa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12l6-5 6 5"/><path d="M4 11v9h8v-9"/><path d="M12 9l5-4 5 4"/><path d="M14 20h6v-9"/><path d="M7 20v-4h2v4"/></symbol>
+  <symbol id="i-shop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1.5-5h13L20 9"/><path d="M4 9h16v2a3 3 0 0 1-5.3 1.9A3 3 0 0 1 12 14a3 3 0 0 1-2.7-1.1A3 3 0 0 1 4 11z"/><path d="M5 13v7h14v-7"/><path d="M10 20v-4h4v4"/></symbol>
+  <symbol id="i-garage" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-5 9 5v11H3z"/><path d="M7 20v-8h10v8"/><path d="M7 15h10"/></symbol>
+  <symbol id="i-land" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19c3-4 6-4 9 0s6 4 9 0"/><path d="M12 15V6"/><path d="M12 9c-2.5 0-4-1.5-4-4 2.5 0 4 1.5 4 4zM12 8c0-2.5 1.5-4 4-4 0 2.5-1.5 4-4 4z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 12v6M9 15l3 3 3-3"/></symbol>
+  <symbol id="i-steps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V14M10 20V9M16 20V4M2 20h20"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12l3 3 7-7"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9V3h10v6"/><path d="M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></symbol>
+</svg>
+
+<header class="top"><div class="in">
+  <a class="logo" href="#analizza" aria-label="RecoveryStudio, pagina iniziale"><svg viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="30" height="30" rx="9" fill="#0B1533" stroke="url(#gA)" stroke-width="1.6"/><path d="M8 15.5 16 9l8 6.5" fill="none" stroke="#EEF3FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 23.5l4.5-4 3.5 2.5 6-6" fill="none" stroke="url(#gA)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="16" r="1.9" fill="#22D3EE"/></svg><span class="wm"><b>Recovery</b><i>Studio</i></span></a>
+  <nav class="nav" id="nav" aria-label="Menu principale">
+    <button type="button" class="burger" id="burger" aria-expanded="false" aria-controls="nav-list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menu</button>
+    <ul class="nav-list" id="nav-list">
+      <li><a class="nav-a" href="#analizza" data-v="analizza">Analizza</a></li>
+      <li><a class="nav-a" href="#portafoglio" data-v="portafoglio">Portafoglio</a></li>
+      <li><a class="nav-a" href="#risultati" data-v="risultati">Risultati</a></li>
+      <li><a class="nav-a" href="#guida" data-v="guida">Guida</a></li>
+    </ul>
+  </nav>
+  <div class="me"><a class="btn pri sm navcta" href="#analizza" id="btn-new" data-go="analizza" data-to="a-nuova"><svg><use href="#i-plus"/></svg>Nuova analisi</a><span class="live off" id="ai-status"><i></i><span id="ai-status-t">IA non collegata</span></span><span class="demo">DEMO</span><span class="av" title="Asset manager">AM</span></div>
+</div></header>
+
+<main>
+  <!-- ANALIZZA -->
+  <section class="view" id="v-analizza">
+    <div class="brandhero"><span class="tagline">IA per il recupero dei crediti con garanzia immobiliare</span><span class="wm"><b>Recovery</b><i>Studio</i></span><p>Incolla la perizia: in pochi secondi sai se conviene tentare l'asta o chiudere un accordo, quale offerta accettare e quali rischi ci sono.</p></div>
+
+    <div class="panel intake ring-live anchor" id="a-nuova">
+      <div class="ph" style="margin-bottom:0"><div><h2>Nuova analisi</h2><p class="sub">Incolla la perizia di qualsiasi esecuzione immobiliare: appartamenti, ville, box, negozi, terreni.</p></div>
+        <div class="row"><label class="btn ghost sm" for="pdf"><svg><use href="#i-file"/></svg>Carica PDF</label><input type="file" id="pdf" accept="application/pdf,.pdf,.txt" class="sr"></div></div>
+      <div class="drop" id="drop">
+        <label class="sr" for="perizia">Testo della perizia</label>
+        <textarea id="perizia" placeholder="Incolla qui il testo della perizia, oppure trascina il file PDF in questo riquadro."></textarea>
+        <div class="over">Rilascia il PDF per leggerlo</div><div class="scan"></div>
+      </div>
+      <div class="log" id="log" aria-live="polite"></div>
+      <div class="row" style="margin-top:6px"><button type="button" class="btn pri" id="btn-ai"><svg><use href="#i-spark"/></svg>Analizza con l'IA</button><button type="button" class="btn ghost" id="btn-manual">Compila a mano</button><span class="msg" id="ai-msg"></span></div>
+      <div class="ex anchor" id="a-esempi"><span>Esempi pronti:</span><button type="button" data-ex="A">Appartamento a Monza</button><button type="button" data-ex="B">Villetta a Montaldeo</button></div>
+    </div>
+
+    <div class="panel anchor" id="a-recenti">
+      <div class="ph"><div><h2>Ultime analisi</h2><p class="sub">Restano salvate in questo browser. Le trovi tutte nel Portafoglio.</p></div><a class="btn ghost sm" href="#portafoglio">Vai al portafoglio</a></div>
+      <div class="recent" id="recent"></div>
+    </div>
+  </section>
+
+  <!-- SCHEDA -->
+  <section class="view" id="v-scheda">
+    <div class="row noprint"><a class="btn ghost sm" href="#portafoglio">← Portafoglio</a><a class="btn ghost sm" href="#analizza">Nuova analisi</a></div>
+    <div class="printhead"><span class="wm" style="font-size:18px"><b>Recovery</b><i>Studio</i></span><span id="ph-date"></span></div>
+    <div class="banner hide" id="s-banner"></div>
+    <div class="panel">
+      <div class="sh-head">
+        <div class="ico" id="s-ico"><svg><use href="#i-home"/></svg></div>
+        <div><div class="label" id="s-label">Scheda immobile</div><h1 id="s-title">–</h1><p id="s-sub"></p></div>
+        <div class="row noprint"><button type="button" class="btn ghost sm" id="btn-print"><svg><use href="#i-print"/></svg>Scarica PDF</button><button type="button" class="btn danger sm hide" id="btn-del">Elimina</button></div>
+      </div>
+      <div class="facts4" id="s-facts"></div>
+    </div>
+
+    <div class="sheet">
+      <nav class="toc noprint" id="toc" aria-label="Sezioni della scheda"><span class="t">La scheda in 7 domande</span>
+        <a href="#" data-to="s-consiglio"><i>1</i>Cosa conviene fare?</a>
+        <a href="#" data-to="s-accordo"><i>2</i>Quale accordo accettare?</a>
+        <a href="#" data-to="s-aste"><i>3</i>E se l'asta va deserta?</a>
+        <a href="#" data-to="s-perche"><i>4</i>Perché questo consiglio?</a>
+        <a href="#" data-to="s-crit"><i>5</i>Quali rischi ci sono?</a>
+        <a href="#" data-to="s-dati"><i>6</i>I dati sono giusti?</a>
+        <a href="#" data-to="s-decisione"><i>7</i>La decisione</a>
+      </nav>
+      <div class="flow">
+        <div class="panel verdict ring-live anchor" id="s-consiglio">
+          <div class="vl">
+            <div class="qh"><span class="qn">1</span><div><h2>Cosa conviene fare?</h2></div></div>
+            <h2 id="v-title" style="font-size:36px">–</h2>
+            <p id="v-sub"></p>
+            <div class="vgauge">
+              <div class="g"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(148,178,255,.12)" stroke-width="10"/><circle id="v-arc" cx="60" cy="60" r="50" fill="none" stroke="url(#gA)" stroke-width="10" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="filter:drop-shadow(0 0 6px rgba(34,211,238,.8));transition:stroke-dasharray .8s ease"/></svg>
+                <div><span><b id="v-p">–</b><small>di vendita</small></span></div></div>
+              <p id="v-ptext"></p>
+            </div>
+          </div>
+          <div class="vr">
+            <h3>Quanto si recupera con le due strade, al valore di oggi</h3>
+            <div id="v-ways"></div>
+            <p class="note">Un euro incassato tra due anni vale meno di un euro adesso: per questo gli importi sono scontati al 10% annuo.</p>
+          </div>
+        </div>
+
+        <div class="panel anchor" id="s-accordo">
+          <div class="qh"><span class="qn">2</span><div><h2>Quale accordo accettare?</h2><p>Un saldo e stralcio con il debitore o la cessione del credito a un investitore conviene solo se supera quanto vale, in media, tentare l'asta.</p></div></div>
+          <div id="c-offer"></div>
+          <div class="offer noprint"><label for="offer-in">Hai ricevuto un'offerta? Scrivila qui (€)<input type="number" id="offer-in" min="0" step="1000" placeholder="es. 110000"></label></div>
+          <div class="find a" id="f-offer"></div>
+        </div>
+
+        <div class="panel anchor" id="s-aste">
+          <div class="qh"><span class="qn">3</span><div><h2>E se l'asta va deserta?</h2><p>Dopo ogni asta deserta il giudice può ridurre il prezzo base fino a un quarto (art. 591 c.p.c.): l'immobile diventa più attraente, ma passano mesi.</p></div></div>
+          <div id="c-steps"></div>
+          <div class="key"><span><i style="background:linear-gradient(#22D3EE,#8B5CF6)"></i>Prezzo di partenza</span><span><i style="background:#FBBF24;border-radius:50%"></i>Probabilità di vendere a quel tentativo</span></div>
+          <div class="find" id="f-steps"></div>
+        </div>
+
+        <div class="panel anchor" id="s-perche">
+          <div class="qh"><span class="qn">4</span><div><h2>Perché questo consiglio?</h2><p>Di quanti punti ogni caratteristica dell'immobile alza (verde) o abbassa (rosso) la probabilità di vendita.</p></div></div>
+          <div id="c-factors"></div>
+        </div>
+
+        <div class="panel anchor" id="s-crit">
+          <div class="qh"><span class="qn">5</span><div><h2>Quali rischi ci sono?</h2><p>Cosa può frenare la vendita o costare a chi compra, con la frase della perizia da cui viene.</p></div></div>
+          <ul class="crit" id="crit"></ul>
+        </div>
+
+        <details class="panel data anchor" id="s-dati">
+          <summary><span class="qh" style="margin:0"><span class="qn">6</span><span><h2>I dati sono giusti?</h2><span class="sub" style="display:block;color:var(--text2);font-size:14px;margin-top:4px">I dati trovati dall'IA nella perizia. Aprili per controllarli: se correggi un dato, tutta la scheda si aggiorna.</span></span></span><svg class="chev"><use href="#i-chev"/></svg></summary>
+          <div class="grid3" style="margin-top:20px">
+            <label class="f" for="f-tipo">Tipo di immobile<select id="f-tipo"><option>Appartamento</option><option>Villetta</option><option>Box</option><option>Locale commerciale</option><option>Terreno</option></select></label>
+            <label class="f" for="f-comune">Comune<input type="text" id="f-comune"></label>
+            <label class="f" for="f-trib">Tribunale<input type="text" id="f-trib"></label>
+            <label class="f" for="f-base">Prezzo di partenza dell'asta (€)<input type="number" id="f-base" min="1000" step="500"></label>
+            <label class="f" for="f-mercato">Valore di mercato (€)<input type="number" id="f-mercato" min="1000" step="500"></label>
+            <label class="f" for="f-deserte">Aste già andate deserte<input type="number" id="f-deserte" min="0" max="10" step="1"></label>
+          </div>
+          <div class="grid2" style="margin-top:14px">
+            <label class="q" for="f-occ"><input type="checkbox" id="f-occ"><span><b>È occupato?</b><em id="ev-occ">Qualcuno ci abita ancora</em></span></label>
+            <label class="q" for="f-abusi"><input type="checkbox" id="f-abusi"><span><b>Ha abusi edilizi?</b><em id="ev-abusi">Opere fatte senza permesso</em></span></label>
+            <label class="q" for="f-man"><input type="checkbox" id="f-man"><span><b>Servono lavori importanti?</b><em id="ev-man">Manutenzione scarsa</em></span></label>
+            <label class="q" for="f-zona"><input type="checkbox" id="f-zona"><span><b>È in una zona richiesta?</b><em id="ev-zona">Città o area dove gli immobili si vendono</em></span></label>
+          </div>
+          <p class="msg" id="f-msg" style="margin-top:12px"></p>
+        </details>
+
+        <div class="panel anchor" id="s-decisione">
+          <div class="qh"><span class="qn">7</span><div><h2>La decisione</h2><p>Il sistema consiglia, la decisione è tua. Se scegli l'altra strada, scrivi il motivo: resta registrato.</p></div></div>
+          <div class="dec">
+            <label class="sr" for="d-note">Motivo</label>
+            <input type="text" id="d-note" placeholder="Motivo, se scegli l'altra strada (es. il debitore ha già proposto un accordo)">
+            <div class="row"><button type="button" class="btn ok" id="btn-ok"><svg><use href="#i-check"/></svg>Confermo il consiglio</button><button type="button" class="btn ghost" id="btn-other">Scelgo l'altra strada</button></div>
+            <span class="msg" id="d-msg"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTAFOGLIO -->
+  <section class="view" id="v-portafoglio">
+    <div class="head"><div class="label">Portafoglio Secured Italia</div><h1>Portafoglio</h1><p>Tutte le posizioni: quelle di esempio e quelle che analizzi tu. Per ognuna, la probabilità di vendita e la strada consigliata.</p>
+      <div class="jump"><span>In questa pagina</span><a href="#portafoglio" data-go="portafoglio" data-to="p-sintesi"><i>01</i>Sintesi</a><a href="#portafoglio" data-go="portafoglio" data-to="p-grafici"><i>02</i>Grafici</a><a href="#portafoglio" data-go="portafoglio" data-to="p-elenco"><i>03</i>Elenco</a></div></div>
+    <div class="kpis anchor" id="p-sintesi">
+      <div class="panel kpi"><span class="k">Posizioni</span><b id="k1">–</b><span id="k1s"></span></div>
+      <div class="panel kpi"><span class="k">Prezzo di partenza totale</span><b id="k2">–</b><span>somma delle aste in portafoglio</span></div>
+      <div class="panel kpi"><span class="k">Aste a rischio</span><b id="k3">–</b><span>andrebbero deserte tentando sempre l'asta</span></div>
+      <div class="panel kpi ring-static"><span class="k">Recupero in più</span><b class="gt" id="k4">–</b><span>seguendo i consigli, al valore di oggi</span></div>
+    </div>
+    <div class="pcharts anchor" id="p-grafici">
+      <div class="panel"><h3>Consigli del sistema</h3><p class="sub">Quante posizioni all'asta e quante ad accordo.</p>
+        <div class="donutbox"><div class="donut"><svg viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="80" fill="none" stroke="rgba(148,178,255,.1)" stroke-width="16"/><circle id="arcA" cx="100" cy="100" r="80" fill="none" stroke="url(#gA)" stroke-width="16" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="filter:drop-shadow(0 0 8px rgba(34,211,238,.7));transition:stroke-dasharray 1s ease"/><circle id="arcB" cx="100" cy="100" r="80" fill="none" stroke="url(#gB)" stroke-width="16" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" style="filter:drop-shadow(0 0 8px rgba(251,191,36,.6));transition:stroke-dasharray 1s ease .2s"/></svg><div class="c"><div><b id="d-n">–</b><small>posizioni</small></div></div></div>
+          <div class="dleg"><div><i style="background:var(--grad)"></i><b id="d-a">–</b>tentare l'asta</div><div><i style="background:var(--grad-a)"></i><b id="d-b">–</b>chiudere un accordo</div><div><i style="background:#6EE7B7"></i><b id="d-c">–</b>già decise</div></div></div></div>
+      <div class="panel"><h3>Calendario delle aste</h3><p class="sub">Aste per mese, divise per consiglio. Le posizioni senza data non compaiono.</p><div id="c-cal"></div>
+        <div class="key"><span><i style="background:linear-gradient(#22D3EE,#3B82F6)"></i>Tentare l'asta</span><span><i style="background:linear-gradient(#FBBF24,#F97316)"></i>Chiudere un accordo</span></div></div>
+    </div>
+    <div class="panel anchor" id="p-elenco">
+      <div class="lh">
+        <div><h2>Elenco delle posizioni</h2><p class="sub">Clicca una riga per aprire la scheda completa.</p></div>
+        <div class="tools"><label class="search" for="q"><svg><use href="#i-search"/></svg><input type="text" id="q" placeholder="Cerca comune o tribunale"></label>
+          <div class="filt" id="filt"><button type="button" class="on" data-f="all">Tutte</button><button type="button" data-f="asta">Asta</button><button type="button" data-f="acc">Accordo</button><button type="button" data-f="todo">Da decidere</button><button type="button" data-f="mine">Mie analisi</button></div></div>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Immobile</th><th class="ch-hide">Asta</th><th class="r ch-hide">Prezzo di partenza</th><th class="ch-hide">Prob. di vendita</th><th class="r ch-hide">Accordo minimo</th><th>Consiglio</th><th class="ch-hide">Stato</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+      <div class="row" style="margin-top:22px"><button type="button" class="btn ghost sm" id="btn-ex-toggle">Nascondi le posizioni di esempio</button></div>
+    </div>
+  </section>
+
+  <!-- RISULTATI -->
+  <section class="view" id="v-risultati">
+    <div class="head"><div class="label">Risultati</div><h1 id="r-title">Meno aste inutili, incassi più veloci.</h1><p>Perché il sistema conviene: prima il problema, con i dati reali del mercato; poi cosa cambierebbe su 1.000 immobili e quanto rende.</p>
+      <div class="jump"><span>In questa pagina</span><a href="#risultati" data-go="risultati" data-to="r-problema"><i>01</i>Il problema</a><a href="#risultati" data-go="risultati" data-to="r-impatto"><i>02</i>Impatto</a><a href="#risultati" data-go="risultati" data-to="r-costi"><i>03</i>Costi e guadagni</a></div></div>
+    <div class="panel anchor" id="r-problema">
+      <h2>01 · Il problema</h2><p class="sub">Oggi quasi tutti gli immobili pignorati vanno all'asta. Ecco cosa succede.</p>
+      <div class="facts">
+        <div><b class="gt">1 su 2</b><span>immobili all'asta non trova un compratore</span></div>
+        <div><b class="gt">4,85 anni</b><span>la durata media di una procedura</span></div>
+        <div><b class="gt">9 su 10</b><span>immobili venduti all'asta finiscono sotto la stima</span></div>
+      </div>
+      <p class="src">Fonti: RINA Prime, aste giudiziarie 2024 (50% dei lotti aggiudicati); Associazione T6, studio sulle esecuzioni 2025; Associazione T6, Tribunale di Firenze (89% aggiudicate sotto la stima).</p>
+    </div>
+    <div class="anchor" id="r-impatto" style="display:flex;flex-direction:column;gap:14px">
+      <div><h2>02 · Impatto su 1.000 immobili</h2><p class="sub" style="color:var(--text2);margin-top:4px">Oggi contro con il sistema, provato su 1.200 aste passate e riportato a 1.000 immobili.</p></div>
+      <div class="big3">
+        <div class="panel ring-static"><h3>Aste andate deserte</h3><div class="v gt" id="c1b"></div><p>Aste che non trovano un compratore e fanno perdere tempo.</p><div class="vs" id="c1"></div></div>
+        <div class="panel ring-static"><h3>Tempo per incassare</h3><div class="v gt" id="c2b"></div><p>Mesi medi tra la decisione e l'incasso.</p><div class="vs" id="c2"></div></div>
+        <div class="panel ring-static"><h3>Soldi recuperati</h3><div class="v gt" id="c3b"></div><p>Valore di oggi di quanto si incassa in totale.</p><div class="vs" id="c3"></div></div>
+      </div>
+    </div>
+    <div class="panel anchor" id="r-costi">
+      <h2>03 · Costi e guadagni</h2>
+      <p class="sub">Ogni 1.000 immobili gestiti. Conta anche il tempo risparmiato: la perizia la legge l'IA in pochi secondi invece di una persona in circa 45 minuti.</p>
+      <div class="money" id="money"></div>
+    </div>
+  </section>
+
+  <!-- GUIDA -->
+  <section class="view" id="v-guida">
+    <div class="head"><div class="label">Guida</div><h1>Come si usa</h1><p>Tutto quello che serve per usare il sistema e leggere i risultati, in due minuti.</p>
+      <div class="jump"><span>In questa pagina</span><a href="#guida" data-go="guida" data-to="g-passi"><i>01</i>Come si usa</a><a href="#guida" data-go="guida" data-to="g-come"><i>02</i>Come funziona</a><a href="#guida" data-go="guida" data-to="g-grafici"><i>03</i>I grafici</a><a href="#guida" data-go="guida" data-to="g-parole"><i>04</i>Le parole</a></div></div>
+    <div class="panel anchor" id="g-come">
+      <h2>Come funziona</h2>
+      <div class="pipe">
+        <div><span class="n">01</span><b>L'IA legge la perizia</b><span>Estrae occupazione, abusi, stato di manutenzione, prezzi e criticità, citando la frase da cui li prende.</span></div>
+        <div><span class="n">02</span><b>Stima la probabilità di vendita</b><span>Un modello statistico confronta l'immobile con migliaia di aste passate simili.</span></div>
+        <div><span class="n">03</span><b>Fa i conti in euro</b><span>L'asta, con il rischio che vada deserta, contro un accordo sicuro e veloce.</span></div>
+        <div><span class="n">04</span><b>La persona decide</b><span>L'asset manager conferma o sceglie l'altra strada, motivando la scelta.</span></div>
+      </div>
+      <details class="tech" style="margin-top:22px">
+        <summary>Dettagli tecnici</summary>
+        <p>Il modello è una regressione logistica stimata su 4.000 aste, con 7 informazioni tratte dalla perizia. Distingue le aste che vendono da quelle deserte con un'AUC di 0,71, contro 0,61 della regola a esperienza "rischiosa se occupata o con abusi". Il consiglio sceglie la strada con il valore attuale più alto, scontando gli incassi futuri al 10% annuo: se l'asta vende si incassa il prezzo di partenza in circa 9 mesi; se va deserta si recupera il 75% in circa 2 anni; l'accordo vale il 70% del prezzo di partenza entro 3 mesi. Il grafico "E se l'asta va deserta?" applica un ribasso del 25% a ogni tentativo. Lo storico delle aste e il portafoglio di esempio sono dati di simulazione costruiti sulle statistiche pubbliche del mercato.</p>
+      </details>
+    </div>
+    <div class="guide">
+      <div class="col" style="display:flex;flex-direction:column;gap:24px">
+        <div class="panel anchor" id="g-passi">
+          <h2>Come si usa</h2>
+          <ol class="use">
+            <li><div><b>Incolla la perizia</b><span>In "Analizza", incolla il testo o trascina il PDF. Per provare, usa uno dei due esempi.</span></div></li>
+            <li><div><b>Fai partire l'analisi</b><span>Premi "Analizza con l'IA": l'IA legge la perizia e si apre la scheda dell'immobile. Senza IA, usa "Compila a mano".</span></div></li>
+            <li><div><b>Leggi il consiglio</b><span>In alto: tentare l'asta o chiudere un accordo, con la probabilità di vendita e quanto si recupera con ciascuna strada.</span></div></li>
+            <li><div><b>Guarda grafici e criticità</b><span>Asta dopo asta, accordo minimo da accettare, cosa pesa sulla probabilità e i rischi trovati nella perizia.</span></div></li>
+            <li><div><b>Controlla i dati e decidi</b><span>Se un dato è sbagliato correggilo: la scheda si aggiorna. Poi conferma il consiglio o scegli l'altra strada scrivendo il motivo.</span></div></li>
+          </ol>
+        </div>
+        <div class="panel anchor" id="g-grafici">
+          <h2>Come leggere i grafici</h2>
+          <dl>
+            <div><dt>E se l'asta va deserta?</dt><dd>Le barre sono il prezzo di partenza a ogni tentativo, che scende del 25% dopo ogni asta deserta. I punti sono la probabilità di vendere a quel tentativo. Sotto trovi la probabilità di vendere entro tre tentativi.</dd></div>
+            <div><dt>Quale accordo accettare</dt><dd>La linea indica l'accordo minimo: sopra conviene accettare, sotto conviene l'asta. Scrivi un'offerta ricevuta e il sistema ti dice se accettarla.</dd></div>
+            <div><dt>Perché questo consiglio?</dt><dd>Le barre verdi alzano la probabilità di vendita, quelle rosse la abbassano. Il numero dice di quanti punti percentuali.</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div class="panel anchor" id="g-parole">
+        <h2>Le parole da sapere</h2>
+        <dl>
+          <div><dt>Perizia</dt><dd>La relazione dell'esperto nominato dal tribunale: descrive l'immobile e ne stima il valore.</dd></div>
+          <div><dt>Esecuzione immobiliare</dt><dd>La procedura con cui il creditore, tramite il tribunale, fa vendere l'immobile pignorato per recuperare il credito.</dd></div>
+          <div><dt>Prezzo di partenza</dt><dd>Il prezzo base fissato dal giudice per l'asta. Sono ammesse offerte fino al 75% di questo prezzo (art. 571 c.p.c.).</dd></div>
+          <div><dt>Asta deserta</dt><dd>Un'asta in cui nessuno fa un'offerta. Si riprova dopo mesi, con il prezzo base ridotto fino a un quarto (art. 591 c.p.c.).</dd></div>
+          <div><dt>Servicer</dt><dd>La società che gestisce il recupero dei crediti deteriorati per conto di banche e investitori, come doValue.</dd></div>
+          <div><dt>Accordo</dt><dd>Chiudere senza aspettare l'asta: un accordo con il debitore (saldo e stralcio) oppure la vendita del credito a un investitore.</dd></div>
+          <div><dt>Accordo minimo</dt><dd>La cifra oggi che vale quanto, in media, tentare l'asta. Un'offerta sopra questa cifra conviene accettarla.</dd></div>
+          <div><dt>Probabilità di vendita</dt><dd>Su 100 aste di immobili simili, quante trovano un compratore.</dd></div>
+          <div><dt>Valore di oggi</dt><dd>Gli incassi futuri valgono meno di quelli immediati, quindi vengono scontati per confrontarli in modo corretto.</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const TEST = [[1,0,0,1,1,1.15,0,79300,1,0.582],[1,0,1,0,1,0.48,2,147800,1,0.3416],[1,0,0,1,1,2.38,0,53400,0,0.4937],[0,0,1,1,0,-2.41,4,289400,0,0.7085],[1,0,0,1,1,-0.08,3,132100,1,0.6],[1,1,0,0,1,0.42,1,108900,1,0.3032],[0,0,1,1,1,0.35,4,121600,0,0.6238],[0,0,0,0,1,0.28,0,116300,1,0.7044],[0,1,0,1,1,1.78,1,166300,1,0.5216],[1,0,1,1,1,-1.31,1,98500,1,0.6152],[0,0,1,1,1,1.88,0,100000,0,0.6078],[0,0,1,1,1,1.17,0,83500,0,0.6556],[0,0,0,0,0,-0.32,3,46600,1,0.585],[0,0,0,0,1,0.62,1,72700,1,0.6629],[0,1,0,0,1,-2.03,2,115900,1,0.6417],[0,0,0,1,1,0.08,2,88100,0,0.7776],[0,1,1,1,1,0.79,1,63600,0,0.4732],[1,1,0,0,0,-1.07,3,102900,1,0.2679],[1,0,0,0,1,1.32,0,46000,1,0.4424],[0,0,1,0,1,-1.01,3,245800,1,0.6178],[0,0,1,0,1,2.22,0,132400,1,0.4568],[1,0,1,0,1,1.88,1,81100,1,0.2753],[1,0,0,0,1,2.05,0,97800,1,0.3911],[1,0,1,0,1,2.51,0,102100,1,0.258],[0,1,0,1,1,0.17,1,367200,0,0.6347],[1,0,0,1,1,3.48,0,116800,1,0.4149],[1,0,0,1,1,1.43,0,113400,1,0.5621],[0,0,1,1,1,-1.58,4,130700,0,0.7436],[1,0,1,0,0,0.35,2,79000,0,0.262],[0,0,1,0,1,0.98,0,29300,1,0.5463],[0,0,1,1,0,3.15,0,90300,1,0.4142],[1,0,0,0,1,2.66,0,55600,1,0.3499],[0,0,1,1,1,0.32,2,70100,0,0.6687],[0,0,0,1,0,-0.82,0,60000,0,0.783],[0,0,0,0,1,-0.72,3,137800,1,0.7061],[1,0,0,1,0,1.13,2,137800,1,0.4333],[0,1,1,1,0,0.0,2,122500,1,0.4038],[0,0,0,1,1,-1.08,2,66700,0,0.8303],[1,0,0,1,1,0.93,2,61800,0,0.5516],[1,0,0,0,0,0.4,1,92600,0,0.3832],[1,0,0,0,1,0.97,0,104400,1,0.4675],[0,1,0,0,1,0.65,1,58500,0,0.4751],[1,1,0,0,1,-1.25,2,72100,1,0.3912],[1,0,0,0,1,2.99,1,123800,1,0.3081],[1,1,0,1,1,-0.1,0,164500,1,0.4814],[0,0,0,1,1,1.84,1,44300,0,0.6976],[1,0,1,1,1,-0.73,0,89100,0,0.5975],[0,0,1,1,1,-0.61,1,73300,0,0.7437],[0,0,0,1,1,-1.0,1,109300,0,0.84],[0,0,1,0,0,1.15,0,97900,1,0.4303],[0,0,0,0,1,3.74,2,95900,0,0.4204],[0,0,0,0,1,0.98,2,54300,0,0.6173],[0,0,0,0,1,-0.1,2,72700,0,0.688],[0,0,1,0,1,-2.93,3,94000,0,0.7382],[0,0,0,0,0,1.11,1,61500,0,0.5292],[0,1,0,1,1,-0.72,0,217500,1,0.7118],[0,1,1,1,1,1.33,2,160700,0,0.4116],[0,0,0,1,0,2.33,0,105200,0,0.5917],[0,0,1,1,1,-0.41,2,74300,0,0.7138],[1,0,0,0,1,0.64,0,103700,1,0.4914],[0,0,0,0,1,-2.54,4,194800,0,0.7875],[1,1,0,0,1,-0.99,2,111100,0,0.3735],[1,0,1,0,0,1.19,1,107300,1,0.2341],[0,0,0,0,0,2.62,0,94200,1,0.4437],[0,0,0,0,1,1.43,1,123500,0,0.6087],[1,1,0,1,1,2.2,0,100100,0,0.3229],[0,1,0,0,1,2.42,1,80900,1,0.3515],[1,0,1,1,1,-3.13,4,77900,0,0.6715],[1,1,0,0,1,-0.59,0,87600,1,0.3904],[1,0,1,0,1,0.31,1,85400,0,0.3745],[0,0,1,0,1,1.94,3,51800,1,0.4076],[0,0,1,0,1,2.35,0,65700,1,0.4474],[0,0,0,1,1,3.47,0,54500,1,0.6125],[0,0,1,0,1,3.23,1,83900,1,0.3636],[1,0,0,1,1,1.1,1,87800,1,0.5626],[1,0,0,1,1,1.21,0,228700,1,0.5778],[0,0,0,1,1,-0.73,4,35400,0,0.7856],[0,1,0,1,1,0.14,2,55400,0,0.6148],[0,0,0,0,0,-2.43,3,101200,0,0.722],[0,0,0,1,0,-0.32,2,63800,0,0.7212],[0,0,0,0,0,1.18,1,86700,1,0.5242],[1,1,1,0,1,2.4,0,81600,1,0.1429],[0,1,1,0,0,-2.25,2,194100,1,0.4376],[0,0,1,0,1,-1.0,2,99500,0,0.6391],[0,0,0,1,1,-0.41,2,45800,1,0.8012],[0,0,1,0,0,-0.39,1,49800,1,0.5178],[0,0,0,1,1,-0.56,3,169900,0,0.7931],[0,0,0,0,1,0.14,3,151900,0,0.6519],[0,1,0,1,0,-2.04,4,168500,0,0.621],[1,1,0,0,0,0.6,1,100400,1,0.214],[0,0,1,1,1,0.18,2,94600,0,0.6776],[1,0,1,0,1,2.31,0,116500,1,0.2693],[0,1,0,1,1,-2.11,2,82200,0,0.7538],[1,0,0,1,1,1.16,2,119800,0,0.535],[1,0,0,0,1,-0.53,2,80500,1,0.5291],[1,0,0,1,1,-0.42,2,240000,0,0.6452],[0,0,0,0,1,4.89,0,124600,1,0.3854],[1,0,1,0,1,-0.33,2,169900,0,0.3962],[1,0,1,1,1,2.78,0,58700,0,0.3495],[1,1,0,1,1,0.61,1,101100,1,0.4076],[1,0,0,1,1,-1.19,3,101200,0,0.6742],[0,0,0,0,1,1.2,0,92400,1,0.6461],[0,0,1,0,1,0.56,2,241400,1,0.5299],[0,0,1,0,1,-1.02,3,65200,0,0.6185],[1,0,0,0,1,3.3,0,140900,1,0.309],[0,0,0,1,0,1.61,2,147300,1,0.5967],[0,0,1,0,1,-0.18,2,77800,1,0.5827],[0,0,1,1,1,-0.02,2,71300,0,0.6901],[1,1,1,1,0,1.81,0,143600,1,0.1788],[1,0,0,0,1,2.73,0,61400,1,0.3453],[0,0,1,0,0,1.06,1,173100,0,0.4137],[0,0,0,1,1,2.32,1,39800,0,0.6675],[1,0,1,0,0,0.94,0,93800,1,0.2653],[0,0,0,1,0,-2.16,4,93100,0,0.7851],[0,0,0,1,0,2.14,0,121800,1,0.6049],[0,0,0,0,0,1.85,0,127300,0,0.4992],[0,1,0,1,1,1.82,0,92300,1,0.542],[0,0,0,0,1,0.11,1,183300,0,0.6951],[1,1,1,0,1,-0.03,2,100400,1,0.2183],[1,0,0,0,1,0.6,1,106600,0,0.4708],[0,0,0,1,1,1.98,1,92900,1,0.689],[0,0,0,0,0,-0.18,2,104400,0,0.5979],[1,0,0,0,0,1.53,2,92000,1,0.2896],[1,0,0,0,1,0.73,2,139000,0,0.4382],[0,1,1,0,0,-1.62,3,111900,1,0.3711],[0,0,0,1,0,3.53,0,103700,1,0.5058],[0,0,1,0,1,1.91,0,56300,0,0.4791],[0,0,0,0,1,2.55,0,221100,0,0.5526],[0,0,1,1,0,3.14,0,92600,1,0.4149],[0,0,0,0,0,-0.88,2,190800,0,0.6456],[1,0,0,0,1,2.8,1,90800,1,0.32],[1,0,0,0,1,0.41,1,79100,0,0.4846],[0,1,0,0,1,3.96,0,85900,1,0.276],[1,0,0,1,1,-1.04,1,143500,0,0.705],[1,1,0,0,1,-1.87,2,72100,1,0.4347],[0,0,1,0,0,-1.9,4,118700,0,0.5565],[1,0,0,1,1,1.54,0,108400,0,0.5543],[1,0,0,0,1,3.1,0,62000,0,0.3215],[0,0,0,0,0,1.69,0,214700,0,0.5107],[0,0,0,1,1,-0.56,0,143700,0,0.8355],[0,0,0,1,1,-0.82,0,55900,0,0.8456],[1,0,0,0,1,-0.69,2,70100,0,0.5406],[0,0,1,0,1,0.66,0,99000,0,0.5691],[1,0,0,1,1,0.8,1,132300,0,0.5838],[0,0,0,1,1,1.67,0,105900,1,0.7269],[0,0,0,0,1,0.12,1,122300,0,0.6945],[1,0,0,1,1,3.04,0,132000,0,0.4461],[1,0,1,1,1,-0.91,0,183200,1,0.61],[0,0,0,0,1,0.67,2,118500,0,0.6383],[0,1,0,0,1,-2.39,2,183500,0,0.6653],[0,0,0,1,0,1.02,0,123400,0,0.6792],[1,0,0,0,0,-1.67,0,122000,1,0.5541],[1,0,0,0,0,-0.51,3,99600,0,0.4012],[0,0,1,0,1,-0.95,4,164900,1,0.5913],[0,1,0,0,1,2.04,0,128500,1,0.3993],[1,0,0,0,0,0.02,3,98300,0,0.365],[1,0,0,0,1,0.5,1,137600,0,0.4781],[0,0,0,0,1,-1.32,1,139200,0,0.7752],[1,0,1,0,0,-1.4,3,170900,0,0.3492],[1,0,0,0,1,3.25,0,90900,1,0.3121],[1,0,1,0,1,2.01,2,176900,1,0.2499],[1,0,0,1,1,0.72,2,69200,1,0.5665],[1,1,0,0,1,1.49,2,179700,1,0.2252],[1,1,0,0,1,2.66,1,111200,1,0.1853],[0,0,0,1,1,1.39,1,66300,1,0.7244],[1,1,0,1,1,1.78,1,127500,0,0.329],[0,0,0,0,1,3.86,0,103100,1,0.458],[1,1,1,1,0,3.41,0,103200,1,0.1204],[0,0,1,1,1,0.18,1,102000,0,0.6978],[0,0,1,0,1,1.06,0,97000,1,0.5405],[1,0,0,0,1,-1.4,3,113300,0,0.5682],[0,0,0,0,1,1.7,1,51900,1,0.5899],[0,0,0,0,1,-0.97,2,86100,0,0.7394],[0,0,0,1,1,-1.46,0,73000,0,0.8683],[0,1,0,0,1,2.06,0,62400,0,0.3979],[1,1,1,1,0,4.8,0,40600,1,0.0839],[1,0,0,0,1,0.82,1,106000,1,0.455],[1,0,0,0,1,0.12,1,70400,0,0.5056],[0,0,0,1,1,-1.25,1,84600,0,0.8495],[0,0,0,0,1,-0.68,4,69100,0,0.6838],[0,0,0,0,1,-0.32,0,61900,0,0.7393],[0,0,0,1,0,-0.64,2,110700,0,0.7395],[1,0,0,1,1,1.47,2,113300,1,0.5126],[0,1,0,1,1,1.1,0,73800,1,0.5932],[1,1,1,1,0,2.28,0,46900,1,0.1596],[0,0,0,1,0,0.81,0,60300,0,0.6923],[0,0,0,1,0,2.57,0,95500,1,0.5748],[1,0,1,1,1,0.31,1,110800,1,0.5],[0,0,1,1,1,2.6,0,197300,0,0.5572],[0,0,0,1,0,-1.59,1,146500,0,0.8041],[0,0,0,0,0,0.43,0,95100,0,0.6006],[0,0,1,0,1,-1.7,1,153800,0,0.7043],[1,0,0,0,1,0.1,1,192900,0,0.507],[1,0,0,1,1,0.92,1,111800,0,0.5753],[0,1,0,1,1,0.72,2,78000,0,0.5743],[1,0,0,0,1,2.39,0,98100,1,0.3679],[1,1,1,1,0,0.56,0,112300,1,0.2382],[0,0,1,0,1,-0.5,3,191100,1,0.5824],[0,0,0,0,1,1.72,0,323500,1,0.611],[0,1,1,0,0,0.19,2,104400,0,0.2773],[1,1,0,1,1,0.3,0,36700,1,0.4526],[1,1,0,1,1,-0.62,3,103100,0,0.4489],[0,0,1,0,1,0.06,1,43100,1,0.5886],[1,0,1,1,1,0.45,1,97900,0,0.4899],[0,0,1,0,1,-1.04,1,235800,1,0.663],[0,1,0,0,1,1.54,2,73600,0,0.3891],[0,1,1,0,1,0.79,1,110600,0,0.3497],[1,0,0,0,0,-1.6,2,60800,1,0.5023],[1,0,0,0,1,1.51,0,93900,0,0.4289],[0,1,1,0,0,0.64,0,349600,1,0.289],[1,1,0,1,0,1.24,1,222200,1,0.2742],[0,0,0,0,1,-2.34,2,114700,0,0.8084],[1,1,0,0,1,3.11,0,154600,1,0.1799],[0,0,0,0,1,0.51,2,97000,1,0.6489],[0,1,0,0,1,-1.92,4,106500,0,0.5898],[1,0,0,0,0,0.83,0,119600,0,0.3759],[1,0,1,0,1,-0.36,0,71400,0,0.444],[1,0,0,1,1,3.36,1,63000,1,0.4006],[1,0,0,0,0,2.56,0,92200,1,0.2674],[0,0,1,0,0,1.57,0,86600,1,0.4007],[1,0,0,1,1,0.78,0,63400,0,0.6078],[1,0,0,1,0,1.09,2,106600,1,0.4362],[1,0,1,1,1,0.98,1,72400,1,0.4517],[1,0,1,1,1,0.51,0,73100,0,0.509],[1,0,0,0,0,-2.25,4,95600,1,0.5024],[1,0,0,0,1,-2.0,2,75500,0,0.6323],[0,1,1,1,1,0.42,4,77700,0,0.4301],[1,0,0,1,1,-0.09,1,106500,0,0.6448],[1,1,0,1,0,2.95,0,76300,1,0.2018],[1,0,0,0,1,0.46,0,75100,1,0.5044],[0,0,0,1,1,-0.67,2,44700,1,0.8129],[0,0,0,0,0,-0.97,1,130400,0,0.6725],[1,0,0,1,1,-0.21,0,86700,0,0.6737],[1,0,0,1,1,0.66,1,48200,0,0.5936],[0,0,1,0,1,0.12,2,130100,1,0.5614],[1,1,1,0,1,0.03,1,69300,1,0.2316],[1,0,0,1,0,2.66,0,154500,0,0.372],[1,0,0,0,1,-2.46,3,145100,1,0.6415],[0,0,1,1,0,0.36,1,90100,1,0.5908],[1,0,1,1,0,2.77,1,193500,1,0.2443],[1,0,0,1,0,0.33,2,62300,1,0.4909],[0,0,1,1,1,-0.71,1,98500,0,0.7492],[0,1,0,1,1,-0.12,2,57400,0,0.6324],[1,0,0,0,1,-1.24,1,43200,1,0.6025],[1,0,0,1,1,0.82,2,123100,0,0.5594],[0,0,0,0,1,1.41,0,109300,1,0.6321],[0,0,0,1,1,0.31,1,181300,0,0.7823],[0,0,0,1,1,-0.45,0,98600,0,0.8311],[0,0,0,1,1,3.1,0,128300,0,0.6376],[0,1,0,0,1,1.07,1,127800,0,0.4449],[1,0,1,0,1,1.59,0,54200,1,0.3122],[1,0,1,0,1,1.28,2,77200,1,0.2916],[1,0,0,1,1,4.78,0,79300,0,0.3273],[1,1,0,1,0,0.01,1,104600,1,0.3504],[0,0,0,0,0,0.52,0,95800,0,0.5943],[0,0,0,0,1,-1.5,0,121900,0,0.7996],[1,1,0,1,0,-1.36,3,64200,1,0.3993],[0,0,0,0,1,-0.69,3,74700,0,0.7043],[0,1,1,0,1,-0.11,1,147200,0,0.411],[0,0,0,0,1,2.48,0,177600,1,0.5576],[0,0,1,1,1,-2.0,2,145300,0,0.7981],[0,1,1,1,1,2.68,0,108900,0,0.3634],[1,0,0,0,1,2.58,0,60100,0,0.3552],[0,0,1,0,1,1.09,3,61100,0,0.4681],[1,1,1,0,1,1.62,1,137500,1,0.1598],[0,1,1,0,0,-2.14,3,54900,1,0.4069],[1,0,0,0,1,1.19,0,62600,0,0.4517],[1,0,0,0,1,4.07,0,168700,0,0.2635],[1,1,0,0,1,-1.43,2,132200,0,0.4037],[0,0,0,1,1,0.87,0,142600,0,0.7705],[0,0,1,1,1,-1.88,3,125200,0,0.7765],[0,0,0,1,1,0.3,1,147900,0,0.7828],[1,0,0,0,0,1.35,0,72100,1,0.3413],[1,1,0,0,1,-0.72,1,119900,1,0.3771],[0,1,0,1,1,3.65,0,125400,0,0.4106],[0,0,1,1,1,2.41,0,53500,0,0.5707],[0,1,1,0,1,0.44,0,64800,0,0.3953],[1,0,1,0,0,0.99,2,91200,1,0.2278],[0,0,0,1,1,0.32,1,67600,0,0.7818],[1,0,1,1,1,-2.31,4,62800,1,0.6171],[0,0,0,0,1,2.55,1,34000,1,0.5293],[0,1,1,0,1,1.3,1,72900,0,0.3169],[0,0,0,1,1,-1.37,2,72000,0,0.8418],[1,1,0,0,1,-0.06,1,134800,0,0.3334],[0,1,0,1,1,2.68,0,240500,0,0.4799],[1,0,1,1,1,-0.4,0,117700,1,0.5744],[0,0,0,1,1,2.48,0,145500,0,0.678],[0,0,1,0,1,-1.19,4,112900,0,0.6079],[0,0,0,1,1,-0.66,3,47500,0,0.7978],[0,1,0,0,1,1.99,0,39500,0,0.4028],[0,0,1,1,0,0.6,1,94300,0,0.5739],[0,0,0,1,1,0.64,0,63900,1,0.782],[1,0,1,0,0,2.79,1,107400,1,0.1613],[1,1,1,1,0,2.45,0,36800,1,0.1531],[1,1,0,1,1,-0.46,0,156100,0,0.5075],[1,0,1,0,1,0.78,1,227400,0,0.3432],[0,0,0,0,1,0.96,0,71100,0,0.6619],[1,1,0,0,1,1.8,1,42100,1,0.2259],[0,0,1,1,0,-0.01,3,178900,0,0.5712],[1,0,0,0,1,1.61,1,35000,0,0.3991],[0,1,0,0,1,0.94,2,96200,1,0.4311],[1,1,0,1,1,0.96,1,74900,1,0.3834],[0,0,1,0,1,-2.63,4,60400,0,0.7018],[1,0,0,1,1,-1.18,1,87000,1,0.7134],[1,0,0,0,1,2.37,0,117300,1,0.3692],[0,1,0,0,1,1.74,1,92800,1,0.3976],[1,1,1,0,1,2.27,0,172100,1,0.1475],[0,1,0,0,1,-0.91,4,145700,1,0.5176],[0,0,1,0,1,1.31,0,95400,0,0.5225],[0,0,0,0,1,1.01,1,88000,0,0.6372],[0,0,0,0,1,1.32,0,113900,0,0.6382],[0,0,0,0,0,-0.07,1,42300,1,0.6127],[0,0,0,0,1,0.24,1,152800,0,0.687],[0,1,0,1,1,3.35,0,124400,0,0.4318],[1,1,0,1,1,-2.22,4,71800,1,0.541],[0,0,0,1,1,-0.3,2,97200,0,0.7961],[0,0,0,1,1,0.4,0,82800,0,0.7936],[1,0,0,1,1,2.27,0,102100,0,0.5016],[0,0,1,1,1,-2.77,4,133400,0,0.8037],[1,0,1,0,0,-0.24,2,107000,1,0.2963],[0,0,0,0,1,-2.26,3,112600,0,0.7896],[0,1,0,0,1,1.73,2,127300,1,0.3761],[1,1,0,0,1,-0.39,4,153400,1,0.2934],[0,1,1,0,0,1.13,0,110400,1,0.2607],[1,0,1,0,0,-0.79,3,133300,1,0.3102],[1,0,0,1,1,1.52,0,103200,0,0.5557],[0,0,1,0,1,0.89,0,160500,0,0.5527],[1,0,0,0,1,0.27,1,79800,1,0.4947],[1,0,1,0,0,0.63,0,55200,1,0.2831],[1,1,0,0,1,-0.73,4,55500,1,0.3142],[1,0,0,0,1,1.53,0,238400,0,0.4274],[0,0,0,1,0,3.06,1,96600,1,0.5164],[0,0,1,0,1,-3.18,4,196600,1,0.734],[0,0,0,0,1,1.78,0,144900,0,0.6069],[1,0,0,0,1,-0.31,2,138600,1,0.5132],[1,0,1,1,0,-1.13,2,101200,1,0.4765],[1,0,1,0,1,1.62,1,124400,0,0.2906],[0,0,0,0,1,1.05,0,155000,0,0.656],[1,1,0,1,0,0.43,1,71800,0,0.3233],[1,1,0,0,1,1.29,1,135500,1,0.2528],[1,0,1,1,0,0.82,3,100500,1,0.3203],[0,1,1,1,1,-1.44,1,81900,0,0.6315],[1,0,0,1,0,1.25,1,53100,0,0.4479],[0,1,0,1,1,-0.47,1,120000,1,0.6765],[0,0,0,1,1,3.78,0,127100,1,0.591],[1,1,1,1,0,0.62,0,101500,0,0.235],[1,0,0,1,1,0.91,0,130700,1,0.5988],[0,0,0,1,0,0.18,1,178900,1,0.7109],[0,1,0,0,0,2.12,0,140400,1,0.2997],[1,0,0,1,1,1.59,0,87900,1,0.5507],[0,0,1,0,1,-0.31,3,91700,0,0.569],[0,0,0,1,0,3.55,0,109400,0,0.5044],[0,0,0,0,1,1.8,1,243700,0,0.5829],[1,0,0,0,1,2.3,0,199800,1,0.374],[0,0,1,1,1,-0.11,1,177200,0,0.7152],[1,1,0,1,1,0.68,0,86500,1,0.4255],[0,0,1,0,1,1.94,2,117900,0,0.4304],[0,0,0,0,0,0.12,3,109400,0,0.5538],[0,0,0,0,0,-0.68,3,110800,0,0.6101],[1,1,1,1,1,-0.17,2,75100,1,0.327],[0,1,0,1,1,0.92,0,169100,0,0.6057],[1,0,1,1,0,0.26,1,117100,0,0.4007],[1,0,0,1,1,0.4,1,98300,0,0.6117],[1,0,0,0,1,-1.53,4,120100,1,0.5544],[1,1,1,0,0,-2.11,0,72400,0,0.2885],[0,0,0,0,1,-3.5,3,74900,0,0.8431],[1,1,1,1,1,0.99,1,81400,1,0.2761],[0,0,0,1,1,2.73,1,132200,0,0.6407],[1,0,1,0,0,-1.89,4,102700,0,0.3602],[1,1,0,0,1,2.41,1,67600,1,0.1965],[0,0,0,0,1,0.81,2,76200,0,0.6289],[0,0,0,0,0,4.39,0,148300,1,0.3232],[1,1,1,0,1,-0.25,4,77500,1,0.1979],[1,1,0,1,1,1.9,0,80900,0,0.3422],[0,0,1,0,1,-0.4,0,66300,0,0.6423],[0,1,0,1,1,0.56,1,145400,0,0.6082],[0,0,0,0,1,2.35,0,154600,1,0.5669],[0,1,0,0,1,3.82,0,83000,1,0.2842],[0,0,0,0,1,-0.66,2,71300,0,0.7217],[0,0,0,0,1,1.22,1,115500,0,0.623],[1,0,1,0,1,0.53,0,194900,1,0.3816],[1,0,0,1,0,-1.33,4,93500,0,0.5638],[1,0,0,1,0,1.58,1,121300,1,0.4244],[0,0,0,0,1,2.81,0,69600,0,0.5339],[1,0,0,1,0,0.93,0,122600,1,0.4944],[0,0,0,0,1,-1.77,3,168500,0,0.7651],[0,0,1,1,1,-0.35,2,162700,0,0.7102],[1,1,0,0,1,0.62,1,81400,0,0.2911],[1,0,0,1,1,-1.72,3,84900,0,0.7069],[0,0,0,0,0,1.29,1,109300,0,0.5162],[1,0,0,1,0,-0.91,3,92400,0,0.5569],[0,0,0,0,0,0.97,0,144600,1,0.5625],[0,0,0,0,1,2.52,0,79400,0,0.5547],[1,1,0,0,1,1.76,2,162300,0,0.2118],[0,1,0,0,1,0.29,2,128700,0,0.4777],[0,1,1,0,0,-1.61,3,118600,1,0.3704],[1,0,0,0,0,-1.04,3,121900,1,0.4386],[1,0,0,0,1,-0.19,2,85400,1,0.5045],[0,0,0,1,1,-1.32,3,101700,0,0.8269],[1,0,1,0,1,1.49,0,123900,1,0.3185],[0,0,0,0,1,1.93,0,54500,0,0.5965],[0,0,0,0,1,1.37,1,96600,0,0.6128],[0,0,0,0,1,2.49,0,56100,1,0.5569],[0,0,0,1,1,5.01,0,50600,0,0.503],[1,0,0,1,1,2.99,0,101300,1,0.4497],[1,1,0,0,1,2.28,0,97100,1,0.2181],[1,0,1,1,1,-3.5,4,82200,1,0.6947],[1,0,0,0,1,-1.5,2,66600,0,0.5981],[0,1,0,0,0,1.43,0,116500,1,0.3432],[1,0,0,1,1,1.32,1,124900,0,0.5468],[1,0,0,1,0,1.92,0,121300,1,0.4233],[0,0,0,1,1,2.63,2,99900,0,0.6256],[0,0,0,0,1,-0.52,2,68500,1,0.7135],[1,0,0,0,1,0.44,1,54700,0,0.4824],[1,0,0,0,1,2.75,0,78500,1,0.344],[1,0,0,0,1,0.5,2,60200,0,0.4547],[1,0,1,0,1,1.35,0,63700,1,0.3273],[0,0,1,0,1,1.53,1,160800,1,0.4831],[0,0,1,0,1,2.77,0,74100,1,0.4176],[0,1,1,0,1,1.5,1,113900,1,0.3045],[1,0,0,0,1,-0.94,4,197400,0,0.5119],[0,0,0,1,0,1.0,1,66600,0,0.6597],[1,0,0,1,0,1.22,0,138200,1,0.4734],[0,0,1,1,1,0.55,2,115200,1,0.6538],[1,0,1,0,0,0.31,2,83500,1,0.2642],[0,0,0,0,0,1.88,0,44000,0,0.497],[0,0,0,0,1,4.52,0,117300,1,0.4111],[1,0,0,0,1,-1.92,3,57100,0,0.6047],[0,0,0,0,0,2.42,2,137100,1,0.4119],[0,0,0,0,0,0.48,2,119800,0,0.5512],[0,0,1,1,1,3.68,0,87400,1,0.4792],[1,0,0,1,1,-1.31,4,175000,1,0.661],[0,0,0,0,0,2.03,0,58100,0,0.4861],[0,0,0,1,1,-1.76,2,114000,0,0.8563],[1,1,0,0,0,1.73,1,117600,1,0.164],[1,0,1,0,1,-0.21,3,187100,1,0.3658],[1,1,0,0,1,-2.23,2,100700,0,0.4605],[0,0,0,1,1,2.56,1,110000,1,0.6519],[0,0,1,0,0,-1.15,3,298100,0,0.5259],[1,1,0,0,0,1.17,0,111300,1,0.2022],[1,0,0,1,0,2.12,0,137500,0,0.4092],[1,0,0,0,1,-2.24,2,179500,0,0.6484],[0,1,0,1,1,2.54,0,111900,0,0.49],[1,0,0,0,0,3.38,0,116200,1,0.2235],[0,0,1,0,0,0.55,1,126500,0,0.4499],[1,0,0,0,0,1.92,0,58300,1,0.3052],[0,1,1,0,1,0.95,2,92200,1,0.3185],[0,0,0,0,0,1.97,0,135900,1,0.4905],[1,1,0,1,1,2.69,0,100700,0,0.2927],[0,0,0,0,0,0.76,1,134700,0,0.5544],[1,0,0,1,0,-1.38,2,126600,1,0.6127],[0,0,0,0,1,1.98,0,130200,0,0.593],[0,0,1,0,0,1.14,1,91100,1,0.4081],[1,0,0,1,1,2.97,0,108200,1,0.4511],[0,0,0,0,0,2.11,0,60800,1,0.4803],[0,0,1,0,1,2.05,0,121300,1,0.469],[0,0,0,1,0,0.99,0,88800,1,0.6811],[0,0,1,0,1,1.79,0,120200,1,0.4878],[0,0,1,0,0,1.08,0,100200,0,0.4352],[0,1,0,0,1,-1.31,4,170800,1,0.5465],[0,1,1,1,1,0.8,1,84200,1,0.4725],[1,1,0,1,0,0.78,1,63700,1,0.3015],[0,1,0,1,1,1.21,1,107300,0,0.5625],[0,0,0,1,1,1.53,0,57900,0,0.7349],[1,0,1,0,0,2.63,0,111000,1,0.1812],[1,1,0,1,1,-0.09,2,97100,1,0.4342],[0,0,1,0,1,1.3,2,66400,0,0.4763],[0,0,0,0,1,0.77,0,86300,0,0.6741],[0,0,0,0,1,-2.58,4,108700,0,0.7894],[1,1,0,0,1,1.29,0,205900,1,0.2709],[0,1,0,0,1,0.39,2,79100,0,0.4705],[1,0,1,1,1,-1.03,0,77100,0,0.6182],[1,1,0,0,1,-0.63,2,120900,1,0.3494],[1,0,0,0,0,0.01,1,44400,0,0.4102],[0,1,0,0,1,1.44,1,41000,0,0.4186],[0,0,0,0,1,2.12,0,223200,0,0.5831],[0,0,0,0,1,-3.47,3,84500,0,0.842],[0,0,0,0,1,1.58,1,234700,1,0.5983],[0,0,0,1,1,0.73,2,67300,0,0.7434],[0,0,0,0,1,0.53,2,61300,1,0.6476],[0,0,0,1,0,0.56,2,106000,1,0.6672],[0,0,0,0,1,1.35,0,114600,1,0.6361],[1,0,0,0,1,-0.04,4,109700,0,0.4469],[1,0,0,1,1,-1.2,2,70900,0,0.695],[0,0,1,0,1,2.79,0,91400,1,0.4162],[0,0,1,1,1,1.16,1,86800,0,0.6348],[1,1,1,1,1,2.66,0,177800,1,0.2053],[0,0,1,0,1,3.11,0,38700,0,0.3938],[1,0,0,0,1,-0.16,1,143500,1,0.5258],[1,0,1,1,1,1.22,1,70200,0,0.4345],[0,0,0,0,1,1.62,0,69100,0,0.6179],[0,0,0,1,1,-0.34,1,51700,0,0.8127],[1,0,0,1,1,1.12,2,114000,1,0.5379],[0,0,0,0,1,0.28,0,86100,0,0.7044],[0,0,1,0,1,-0.99,3,100900,1,0.6165],[0,0,1,1,1,0.76,2,142900,0,0.6399],[0,0,1,0,1,2.54,0,138700,0,0.4339],[1,1,1,0,1,2.79,0,132200,1,0.1296],[0,0,0,1,1,0.35,1,74600,0,0.7803],[0,0,0,0,1,-1.65,0,185200,0,0.8065],[1,0,0,1,1,1.98,1,100400,1,0.4992],[0,0,1,0,1,-0.65,0,54500,0,0.6588],[0,0,0,1,0,0.91,2,141000,1,0.6444],[1,1,0,1,1,-1.43,1,82700,0,0.554],[1,0,1,0,0,-0.15,0,124600,0,0.3311],[1,0,1,1,1,1.86,1,77700,0,0.3897],[0,0,1,0,1,2.29,0,131000,0,0.4517],[0,0,1,0,1,1.1,1,178200,0,0.5143],[0,0,0,0,1,0.36,1,121000,1,0.6795],[0,0,1,0,0,2.63,0,57300,0,0.3297],[0,1,1,0,0,1.28,1,154800,0,0.2351],[0,0,0,0,1,4.34,0,61300,1,0.4238],[0,0,0,1,1,1.12,1,61600,0,0.7397],[0,0,1,0,0,2.1,0,54000,1,0.3645],[0,1,0,0,1,-0.75,3,99700,0,0.5295],[0,0,0,0,0,-1.03,2,122200,0,0.6554],[0,0,0,1,0,0.72,2,89700,1,0.6569],[1,0,0,0,1,-0.77,3,65800,1,0.523],[1,0,0,1,1,1.03,0,48100,0,0.5904],[1,0,0,0,1,-3.31,4,180300,1,0.6757],[0,1,0,0,1,2.21,1,71700,1,0.3655],[1,0,0,0,0,-2.94,2,51500,1,0.598],[0,0,0,1,0,2.76,0,52200,0,0.5613],[0,0,0,1,1,1.99,2,86600,0,0.6679],[1,0,1,0,1,0.65,0,157300,1,0.3734],[0,1,0,0,1,1.57,0,84800,0,0.4324],[0,1,0,1,1,-0.16,1,97800,0,0.6566],[0,0,1,1,0,-2.33,3,145300,0,0.7228],[0,0,0,0,1,2.9,1,76400,1,0.504],[0,0,0,1,0,0.6,2,219700,0,0.6647],[0,0,0,0,1,0.98,0,181400,1,0.6606],[0,0,0,1,1,3.45,0,173300,0,0.6139],[1,0,0,0,0,0.84,2,72300,1,0.3324],[0,0,1,1,1,0.94,1,64700,0,0.6494],[0,0,1,1,1,0.86,2,108600,1,0.6332],[1,1,0,0,0,2.07,2,53900,1,0.1393],[0,0,1,0,1,1.41,0,62300,1,0.5153],[0,0,0,1,1,1.87,2,155700,0,0.6756],[0,1,0,0,1,3.41,0,41100,1,0.3089],[1,0,0,1,1,1.71,1,48500,0,0.5187],[0,0,0,0,0,-1.56,2,184400,0,0.6892],[1,0,0,0,1,-1.26,4,184900,0,0.535],[0,0,0,0,1,0.74,3,53200,0,0.6115],[1,0,0,0,0,3.03,0,80900,1,0.2416],[1,0,0,0,1,-0.45,1,67800,0,0.5467],[0,0,1,1,1,1.52,2,79800,1,0.5878],[1,0,0,1,1,2.54,0,85500,0,0.4821],[1,0,0,0,0,0.64,1,114300,1,0.3669],[1,0,1,1,0,-0.21,1,151200,0,0.4338],[1,0,0,0,0,-0.75,0,59900,0,0.4877],[1,0,0,1,1,0.62,0,89200,0,0.6188],[0,0,0,0,0,1.52,2,30800,0,0.4761],[1,0,0,1,1,1.57,0,249000,0,0.5521],[1,0,1,0,1,1.23,1,115600,1,0.3144],[0,1,1,1,1,-0.23,2,137900,1,0.5236],[0,1,0,0,1,2.35,0,116400,1,0.378],[0,0,1,1,1,-0.19,2,212900,0,0.7006],[1,1,0,0,1,-1.33,2,92200,1,0.3968],[0,0,1,0,0,-2.62,1,80100,0,0.672],[0,0,1,0,0,0.61,0,40600,1,0.4689],[0,0,0,0,1,-0.07,0,120900,0,0.7251],[1,0,1,1,0,2.74,0,119700,1,0.2637],[0,1,0,0,0,-3.5,2,87600,0,0.6436],[0,1,1,1,0,1.54,1,74300,0,0.3226],[1,0,0,0,1,0.8,1,176400,0,0.4564],[0,0,0,0,0,3.74,0,68700,1,0.3657],[0,0,0,1,1,2.41,1,92300,0,0.6617],[1,0,0,1,1,-1.0,2,87100,0,0.6826],[0,0,0,1,1,0.6,2,164000,1,0.7505],[0,0,0,0,1,-0.08,1,109300,0,0.7066],[1,0,0,1,0,1.47,0,62900,0,0.4554],[0,0,1,0,1,-1.46,4,151600,0,0.6264],[0,0,1,0,1,-1.98,2,56200,0,0.7017],[0,0,0,0,1,0.84,2,158500,0,0.6268],[0,1,0,1,1,1.79,2,58800,1,0.4974],[1,0,0,0,0,0.31,2,134300,1,0.3673],[1,1,0,0,0,0.12,0,101900,1,0.2557],[0,0,0,0,1,2.79,0,90600,0,0.5354],[1,1,0,0,0,1.23,0,106100,1,0.1994],[0,0,0,0,1,1.69,1,65100,1,0.5906],[1,0,0,0,1,-0.51,0,174000,1,0.5741],[1,1,0,1,0,2.05,3,132100,0,0.1985],[0,0,1,0,1,3.11,2,148500,1,0.35],[1,0,0,0,0,1.56,0,147600,1,0.3278],[0,0,0,0,1,2.54,1,100200,1,0.53],[0,0,1,0,0,1.12,0,166000,1,0.4324],[0,0,1,0,1,0.82,1,198300,0,0.5345],[0,0,0,0,1,2.69,0,131700,0,0.5426],[0,1,0,1,0,-1.89,3,74700,0,0.6328],[1,1,0,1,1,0.77,2,73600,0,0.3743],[0,0,0,1,1,-0.09,1,53200,0,0.8014],[0,0,0,0,0,-1.87,2,50200,0,0.7081],[0,0,0,1,0,1.58,1,70900,0,0.6211],[0,1,0,1,0,-0.33,1,47700,0,0.5696],[0,0,0,0,0,0.27,0,215900,0,0.6116],[0,0,1,0,1,-0.37,0,95600,0,0.6403],[0,0,0,0,0,-1.68,3,61000,0,0.6764],[0,0,1,1,1,2.11,0,76800,1,0.5918],[0,1,0,0,1,-0.44,2,86300,1,0.5305],[1,0,0,0,0,4.46,0,135100,1,0.1739],[1,0,0,1,1,1.3,1,97600,0,0.5483],[0,0,0,0,1,0.37,2,83000,0,0.6581],[1,0,0,1,0,0.27,2,157000,1,0.4952],[1,0,1,1,1,1.81,1,54700,1,0.3931],[1,0,0,1,1,0.18,2,187100,1,0.6045],[0,1,0,0,0,1.16,0,156600,1,0.3611],[0,0,0,1,1,1.74,2,46100,1,0.6838],[0,0,0,1,1,-0.68,3,97300,0,0.7987],[0,0,1,1,1,2.15,0,107100,1,0.589],[1,0,1,1,1,1.42,0,193800,1,0.4434],[1,0,0,0,0,0.03,0,126700,1,0.4317],[0,1,1,0,0,0.18,2,153500,1,0.2779],[0,1,0,0,1,2.01,1,125600,1,0.3791],[1,0,1,1,0,-0.73,2,76800,0,0.4478],[0,0,0,1,1,-0.97,4,110300,0,0.7971],[0,0,0,1,1,-1.92,3,96100,0,0.8503],[0,0,0,0,1,1.51,0,158600,0,0.6254],[0,0,0,0,1,-0.44,0,91900,1,0.7459],[1,0,0,1,0,-2.18,4,66600,1,0.6231],[1,1,0,0,0,0.88,1,144000,1,0.2006],[1,0,0,0,1,1.25,1,148000,0,0.4243],[0,0,0,0,0,-0.68,4,99500,0,0.5876],[1,0,1,0,1,-0.72,3,49600,1,0.4007],[1,0,1,1,1,0.65,0,126300,0,0.4989],[0,0,1,0,1,0.1,3,64300,1,0.5397],[0,0,1,0,1,-0.74,4,345600,0,0.5765],[1,0,0,0,1,-0.34,2,78300,0,0.5154],[0,0,1,0,0,-0.17,2,115300,0,0.4785],[1,0,0,1,1,-1.51,0,101700,1,0.7505],[1,1,0,0,1,3.05,0,117000,1,0.1825],[1,0,0,1,0,2.22,0,137100,0,0.4022],[0,0,0,0,1,-2.66,0,59500,0,0.8481],[1,0,0,1,0,1.37,0,103100,0,0.4626],[0,0,1,0,1,0.68,3,98900,1,0.4977],[1,0,0,0,0,2.03,0,127600,0,0.2985],[0,1,0,0,1,1.91,2,79400,1,0.3639],[1,1,0,0,1,-0.21,2,132300,1,0.3223],[0,1,1,1,1,1.68,1,54000,0,0.4098],[0,0,1,1,0,1.48,0,109000,0,0.5342],[1,0,0,1,1,4.12,0,56600,0,0.3707],[1,0,0,1,1,0.13,0,160200,1,0.6517],[0,0,0,0,1,1.41,1,70700,0,0.61],[1,0,0,1,1,2.3,0,182500,0,0.4995],[1,0,0,0,1,1.18,0,82700,0,0.4524],[1,0,0,1,0,-1.63,1,92000,1,0.6513],[0,0,0,0,0,-0.05,0,153800,0,0.6334],[0,0,0,0,1,-3.0,3,135500,0,0.823],[0,1,0,1,0,0.32,4,144300,0,0.4527],[0,0,0,0,1,-0.84,2,76600,1,0.7321],[1,0,0,0,1,0.04,1,75900,0,0.5113],[0,0,0,0,1,1.55,1,158100,0,0.6003],[1,0,0,0,1,-2.28,3,178800,1,0.6294],[1,0,0,0,1,-0.59,3,90800,0,0.51],[0,0,0,0,1,1.79,0,74900,0,0.6062],[0,1,0,1,0,-0.23,2,96100,1,0.5392],[1,1,0,0,1,-0.85,0,99100,1,0.4085],[1,0,0,1,0,2.45,1,82800,0,0.3643],[1,0,0,0,1,3.79,0,46700,1,0.2795],[1,1,0,0,0,-0.35,3,175100,1,0.229],[1,0,1,1,0,0.16,1,79400,0,0.4077],[0,0,0,0,0,-1.18,3,113800,0,0.644],[0,1,0,0,1,2.57,0,90800,1,0.3631],[1,1,1,0,0,2.61,0,110000,1,0.0937],[1,0,0,0,1,0.93,0,101900,0,0.4704],[0,0,0,0,1,2.7,1,104200,0,0.5185],[0,0,1,0,0,2.22,0,56700,1,0.3565],[0,1,0,1,0,1.59,1,110300,1,0.4314],[0,0,1,0,1,0.91,0,191100,1,0.5513],[0,0,0,0,1,3.29,0,126000,0,0.4992],[1,0,0,0,1,0.6,0,65300,1,0.4943],[0,0,1,0,0,3.52,0,83700,1,0.2754],[0,1,0,0,0,2.34,0,125500,1,0.2865],[1,1,0,0,1,0.07,2,176900,1,0.3048],[1,0,0,0,1,2.69,0,98700,0,0.3479],[1,0,0,0,0,1.22,0,117300,0,0.3498],[1,0,0,1,1,0.21,0,141100,0,0.6464],[0,0,0,1,0,1.05,1,46000,0,0.6565],[1,0,0,1,0,-1.96,4,169400,1,0.608],[0,0,0,0,0,1.05,2,93400,0,0.5102],[0,1,0,0,0,0.07,0,112000,1,0.4366],[0,0,0,0,0,-1.45,4,111600,1,0.6404],[0,0,0,0,0,2.61,0,87600,1,0.4444],[0,0,0,0,0,-0.64,2,230700,1,0.6295],[1,0,0,0,1,5.49,0,56400,1,0.1917],[0,0,0,0,1,-1.35,2,121400,0,0.76],[0,1,0,0,1,-0.04,4,183500,0,0.4548],[0,0,0,0,1,-1.7,1,63500,1,0.7938],[0,0,0,1,1,2.76,2,155300,1,0.6168],[0,1,1,0,1,-0.42,2,93100,1,0.41],[1,0,0,0,1,-0.76,1,149600,0,0.5688],[0,0,1,0,1,-1.27,2,196000,1,0.6569],[1,0,0,0,1,2.76,0,113800,1,0.3433],[0,0,0,0,1,1.13,1,134800,0,0.6291],[0,0,0,0,0,3.83,0,163900,0,0.3597],[0,0,0,0,1,1.77,1,123000,1,0.585],[0,1,1,1,0,4.19,0,48900,1,0.1954],[0,0,0,0,1,0.1,1,111200,0,0.6957],[1,0,0,1,1,-0.09,1,64200,0,0.6448],[1,0,1,0,0,-0.4,2,162400,1,0.3061],[1,0,0,1,1,1.41,0,43700,0,0.5636],[1,1,1,0,1,0.73,0,122000,0,0.2128],[0,0,0,1,0,1.67,2,64700,0,0.5925],[1,0,1,0,0,-2.87,4,300600,0,0.4278],[0,0,0,0,0,-1.35,1,152900,1,0.6963],[0,0,0,0,1,1.97,0,46100,0,0.5937],[1,0,0,0,0,1.67,0,127300,1,0.3208],[0,0,0,1,0,1.17,1,181200,0,0.6486],[0,1,0,0,1,0.55,3,105000,0,0.4358],[1,1,0,0,0,-0.75,1,112200,1,0.2869],[0,0,0,1,1,-2.76,4,126200,0,0.8684],[0,1,0,0,0,1.46,0,152700,1,0.3413],[1,1,0,0,1,3.76,0,85500,1,0.1538],[0,0,1,1,1,0.83,0,147800,0,0.6775],[0,1,1,0,1,0.82,1,60100,1,0.3477],[0,1,0,0,1,1.71,1,66300,0,0.3997],[1,0,0,0,0,1.35,0,118300,0,0.3413],[0,0,0,1,0,-0.52,3,126500,1,0.7139],[1,1,0,0,1,0.38,3,79700,1,0.2674],[0,0,1,0,1,0.03,1,181600,1,0.5907],[1,0,0,0,0,1.54,0,60200,1,0.3291],[0,0,1,0,1,0.3,0,101100,1,0.5945],[0,0,0,0,1,-3.5,4,75500,0,0.8303],[0,1,0,0,1,-0.97,1,51200,0,0.5913],[1,0,0,0,1,1.61,0,100700,1,0.4218],[1,0,0,0,1,0.63,1,63200,0,0.4687],[0,0,0,0,1,2.28,0,233100,0,0.5718],[0,0,1,0,1,1.0,1,162800,1,0.5215],[1,1,0,0,1,-0.64,4,117800,1,0.3086],[1,0,0,0,1,-0.24,0,147800,0,0.5549],[1,0,0,0,0,-2.44,4,209200,1,0.5162],[1,0,0,1,1,2.12,0,64500,1,0.5125],[1,0,0,0,1,-0.04,3,54900,1,0.4702],[1,1,0,1,0,-0.54,0,54200,1,0.41],[0,0,0,0,1,1.72,0,121100,0,0.611],[1,0,1,1,1,-0.96,0,167700,0,0.6135],[1,0,0,0,1,-1.65,3,80300,0,0.5859],[1,0,0,0,0,-0.79,3,68500,0,0.4209],[1,0,0,1,1,1.44,1,91300,0,0.5382],[1,0,0,0,1,0.91,1,56900,0,0.4485],[0,0,0,0,0,0.62,1,160800,0,0.5644],[0,0,0,0,1,2.74,1,157300,0,0.5156],[1,0,1,1,1,-2.69,4,88600,1,0.6428],[0,0,1,0,1,0.98,1,90000,1,0.5229],[0,0,0,0,1,2.16,0,189200,0,0.5803],[1,0,0,0,1,3.85,0,150800,1,0.276],[0,0,0,1,1,-1.92,2,253300,1,0.8619],[0,0,0,0,0,1.07,1,76800,0,0.5321],[0,0,0,1,1,4.08,1,211400,0,0.5467],[1,1,1,1,1,0.77,1,91100,1,0.289],[0,0,0,0,0,1.01,0,103900,1,0.5597],[1,0,0,1,1,-0.07,2,104800,1,0.6216],[0,0,0,1,1,-2.67,3,104800,0,0.8759],[0,0,0,1,1,1.01,0,127200,0,0.7632],[1,0,1,0,1,-0.89,1,127800,1,0.4587],[1,0,0,0,1,-0.23,1,153200,0,0.5309],[1,0,1,1,0,0.07,1,74000,1,0.414],[0,0,0,1,1,2.1,1,46200,0,0.6815],[0,0,0,1,0,-2.0,3,148600,1,0.793],[1,0,0,1,1,1.28,0,85800,1,0.5728],[0,1,0,1,1,1.07,1,90100,0,0.5725],[1,1,1,1,0,1.73,1,108200,1,0.1686],[0,0,0,0,1,0.0,2,166100,1,0.6818],[0,0,1,0,1,0.84,0,56500,0,0.5563],[1,0,0,0,1,0.78,1,64500,1,0.4579],[1,0,1,0,1,0.75,0,86200,1,0.3667],[1,0,0,0,1,-0.58,2,50900,0,0.5327],[1,0,0,0,1,1.93,0,63000,1,0.3994],[0,1,1,0,1,2.81,0,175700,1,0.2476],[1,0,0,1,0,1.72,1,87600,1,0.4145],[0,0,0,0,0,0.77,0,63800,0,0.5767],[1,0,1,1,0,2.36,0,104000,1,0.2856],[0,1,0,1,1,0.53,2,95000,0,0.5877],[1,0,0,0,1,1.08,1,84500,1,0.4364],[1,0,1,0,0,0.95,0,81800,0,0.2647],[1,0,0,1,0,-0.4,2,42800,0,0.5436],[0,1,0,1,1,2.72,2,92200,1,0.4305],[0,0,0,0,1,-2.26,4,56900,0,0.7736],[1,0,1,0,0,1.9,0,126400,1,0.2147],[1,0,0,0,0,-1.27,2,162000,0,0.4784],[0,0,0,0,1,1.3,1,111000,0,0.6176],[1,0,0,0,0,-0.28,3,276700,1,0.3853],[1,0,0,1,1,1.89,0,106200,1,0.5291],[0,0,0,0,1,0.26,0,44100,1,0.7057],[1,0,0,1,0,1.99,0,123200,1,0.4183],[0,1,0,0,0,-0.81,4,77700,1,0.4072],[0,0,1,1,1,1.47,0,116800,0,0.6357],[1,0,0,0,1,1.28,1,68600,0,0.4222],[1,0,1,1,0,2.17,0,86700,1,0.297],[1,0,1,0,1,-0.8,1,116100,0,0.4523],[1,0,0,1,1,0.48,1,107800,0,0.6061],[0,0,0,1,1,1.12,1,148000,0,0.7397],[0,0,1,0,1,-0.75,3,39600,1,0.5999],[0,0,0,0,1,0.48,0,48000,0,0.6922],[0,0,0,0,1,0.65,1,55600,0,0.661],[0,0,0,1,1,3.95,0,99500,1,0.5791],[1,1,0,0,1,2.88,0,83600,1,0.1899],[0,1,0,0,1,3.18,0,90400,1,0.3233],[1,0,0,0,1,-1.05,2,120800,1,0.5664],[0,0,0,1,1,1.87,0,106500,0,0.7153],[1,0,0,0,1,2.53,0,141700,1,0.3585],[1,0,0,1,1,0.05,1,57500,0,0.6354],[0,0,1,0,1,1.94,1,85000,0,0.4536],[0,0,0,0,1,-0.54,1,111900,0,0.7334],[0,1,0,1,1,-2.29,2,74300,0,0.7633],[0,0,0,0,1,2.0,0,52000,0,0.5916],[1,0,0,1,1,0.44,1,71500,1,0.6089],[0,0,0,0,0,0.91,1,62200,0,0.5436],[1,0,0,1,0,3.34,0,113200,0,0.3273],[0,1,1,0,1,-1.61,4,113400,1,0.4485],[0,0,0,1,1,-1.35,4,198100,0,0.8143],[1,1,1,0,1,2.27,2,129000,1,0.1255],[0,0,0,1,0,1.23,1,69100,0,0.6446],[1,1,0,1,1,2.29,0,121200,1,0.3173],[0,0,1,1,1,-3.5,3,93900,0,0.8474],[1,0,0,0,1,0.48,2,99400,0,0.4561],[1,0,0,0,0,1.59,2,88600,1,0.2861],[0,1,1,1,1,4.05,0,154000,0,0.2774],[0,0,0,0,1,0.46,1,32700,0,0.6732],[0,0,1,0,1,0.74,1,139800,1,0.5402],[0,0,0,1,1,1.2,0,133900,0,0.7531],[0,0,0,0,1,0.29,1,90600,0,0.6839],[1,0,0,0,1,-0.35,2,98700,0,0.5161],[0,0,0,1,0,-1.03,4,109100,0,0.7248],[0,0,0,0,1,1.03,1,112100,1,0.6359],[1,1,0,0,1,2.76,0,68500,1,0.1953],[0,1,1,0,1,1.4,3,99700,1,0.272],[0,0,0,0,0,-1.45,2,94400,0,0.6824],[1,0,1,1,1,0.43,0,189600,1,0.5148],[1,0,0,1,1,-1.21,2,156700,1,0.6957],[1,0,0,0,1,0.55,0,65100,1,0.4979],[1,0,0,1,0,1.3,0,84800,1,0.4676],[0,0,1,1,0,0.79,0,127300,0,0.5834],[1,0,0,0,1,-0.07,0,45800,1,0.5427],[0,0,0,1,1,-0.74,3,104300,0,0.8015],[1,0,0,1,1,0.85,0,130200,1,0.603],[1,0,1,0,0,2.22,0,180400,1,0.1995],[1,0,1,1,0,2.13,2,126900,1,0.2615],[0,1,1,0,1,1.79,0,73700,1,0.3066],[0,0,0,0,1,1.29,2,69900,0,0.5959],[0,0,0,1,1,0.76,0,76900,0,0.776],[1,0,1,1,1,-1.83,3,57200,0,0.6064],[1,0,0,1,1,0.65,0,86200,1,0.6167],[0,0,0,1,1,-1.74,4,88500,0,0.8308],[0,0,1,1,0,1.58,1,108700,1,0.5035],[0,1,1,0,1,3.64,0,104800,1,0.2056],[0,0,0,0,1,1.25,1,130900,1,0.621],[1,1,1,0,1,1.35,0,99300,1,0.1843],[1,0,0,1,1,-0.15,0,185900,0,0.6698],[1,0,1,0,0,0.33,0,122800,1,0.3011],[0,0,0,0,1,2.06,0,114400,0,0.5874],[0,0,0,0,1,0.84,2,129900,0,0.6268],[0,0,0,1,0,0.63,0,73800,0,0.7033],[0,0,0,1,0,2.72,0,83500,1,0.5641],[1,0,0,1,1,0.76,1,101400,0,0.5866],[0,0,0,1,1,-0.45,0,141600,0,0.8311],[1,1,0,1,1,2.4,0,131500,1,0.3104],[1,1,1,0,1,1.59,2,209000,1,0.1487],[0,0,0,0,0,-0.05,1,72900,0,0.6114],[1,0,0,0,0,2.92,0,194600,1,0.2475],[0,0,0,0,1,-0.9,4,73200,1,0.6974],[0,0,1,1,0,1.38,1,77800,1,0.518],[1,0,0,0,0,-0.6,1,116700,0,0.4535],[1,0,0,1,1,1.61,3,85500,0,0.4791],[1,1,1,0,1,-1.18,3,154200,1,0.2618],[0,1,0,0,0,2.25,1,54800,1,0.2728],[1,0,1,0,0,-0.05,0,114600,0,0.3247],[0,0,1,1,1,0.21,2,199100,0,0.6757],[1,0,0,1,0,0.55,0,110200,1,0.5219],[1,0,0,1,0,-0.97,3,105700,1,0.5612],[1,0,1,1,1,-3.07,3,99800,0,0.6881],[1,0,0,0,1,-0.86,2,163300,1,0.5528],[0,0,0,1,1,0.1,0,182300,0,0.8075],[0,0,0,1,1,-0.14,2,232400,1,0.7885],[1,0,0,0,0,0.12,1,108300,1,0.4025],[1,1,0,0,0,-1.46,1,71200,0,0.3308],[0,0,1,1,1,1.78,0,102900,1,0.6147],[1,1,0,0,1,0.42,0,112600,1,0.3234],[1,0,0,0,0,-1.85,1,129300,0,0.5438],[0,1,0,0,1,-1.38,3,72300,0,0.5746],[0,0,1,1,1,-1.08,2,183700,0,0.7517],[0,0,0,0,0,-1.09,2,58700,0,0.6593],[0,1,0,0,0,1.21,0,83100,1,0.3577],[1,1,1,1,0,-1.58,4,94900,1,0.2853],[0,0,0,0,1,0.98,0,101400,0,0.6606],[1,0,1,0,1,0.9,1,127500,0,0.3354],[1,0,0,0,1,1.51,1,106900,1,0.406],[1,0,0,1,1,-0.53,1,53200,0,0.6734],[0,0,1,1,1,1.24,0,104800,1,0.651],[1,0,0,0,1,2.09,1,218900,1,0.3663],[1,0,0,0,1,2.46,0,68100,0,0.3632],[0,1,0,0,0,1.08,1,83000,0,0.3449],[1,0,1,0,1,-0.12,1,119800,0,0.4041],[1,1,0,1,0,-0.93,2,117300,1,0.392],[1,0,1,1,1,1.05,1,136500,1,0.4467],[0,0,1,1,1,0.39,0,159100,0,0.7047],[1,0,0,0,1,-0.34,1,64200,1,0.5388],[1,0,0,1,1,3.8,0,61900,0,0.3926],[0,0,0,0,0,0.01,2,88700,1,0.5846],[0,0,0,0,1,-0.08,1,109500,0,0.7066],[1,1,1,1,1,1.87,1,155600,1,0.2281],[1,0,0,0,1,-1.88,3,141800,1,0.602],[0,0,0,0,1,3.91,0,135800,0,0.4545],[0,0,0,0,0,1.56,0,122900,0,0.5201],[1,1,0,0,0,0.29,1,73000,1,0.2294],[1,0,0,0,0,2.38,1,129400,1,0.2593],[0,1,1,0,1,-3.16,4,118300,0,0.5602],[1,0,0,0,1,1.72,2,231300,1,0.3693],[0,0,0,0,1,-0.99,0,81400,1,0.7749],[0,0,0,0,0,0.16,3,207400,0,0.5509],[1,1,1,0,1,3.61,0,85700,1,0.1051],[1,0,0,0,1,-0.25,0,220200,0,0.5556],[0,0,0,0,1,3.44,0,96400,0,0.4884],[0,0,0,0,1,2.18,0,92300,1,0.5789],[0,0,0,0,0,1.88,1,33200,0,0.4736],[0,0,1,0,1,1.21,2,90300,0,0.4828],[0,0,1,0,0,-0.68,2,60400,1,0.5154],[0,0,0,0,0,-2.43,2,60100,0,0.7405],[1,0,1,0,1,0.45,0,247300,1,0.3871],[0,1,0,1,0,0.44,1,66000,1,0.5143],[0,1,0,1,0,0.37,0,76900,1,0.5427],[0,0,1,1,0,0.25,0,101500,0,0.6208],[0,0,0,0,1,-1.38,1,127600,0,0.7782],[1,0,1,1,1,-1.93,1,75900,0,0.6568],[0,1,0,1,1,-0.32,0,85900,1,0.6875],[0,0,0,1,0,3.39,0,180500,0,0.516],[1,0,0,1,1,-2.62,3,101100,0,0.7579],[1,0,0,0,0,1.64,0,78400,1,0.3227],[0,0,1,0,0,1.1,2,89800,0,0.3884],[1,0,0,1,1,-0.45,0,93700,0,0.6888],[1,0,0,1,1,0.92,1,69900,0,0.5753],[1,0,0,1,1,-0.16,2,72100,0,0.6278],[0,0,0,0,1,-0.48,2,72300,1,0.7111],[1,0,1,1,1,0.36,1,93900,1,0.4964],[1,0,0,0,1,0.46,2,58300,0,0.4576],[1,0,0,0,1,0.12,3,112400,1,0.4587],[0,0,0,0,1,2.32,1,159200,0,0.5459],[1,0,0,0,1,1.35,0,104800,1,0.4403],[1,0,1,0,1,2.16,1,227100,0,0.2595],[1,0,1,0,0,-0.1,0,123200,1,0.3279],[1,0,1,0,0,-0.39,4,138600,0,0.2672],[0,0,1,0,1,1.79,0,116200,0,0.4878],[1,0,0,1,1,1.97,0,67700,0,0.5234],[1,0,0,1,0,3.34,0,249100,1,0.3273],[0,1,0,1,1,1.17,0,74200,0,0.5883],[1,1,0,0,0,-0.11,2,65500,0,0.2333],[0,0,1,0,1,1.63,1,66300,1,0.4759],[1,0,0,0,1,2.02,0,82000,1,0.3931],[1,0,0,1,0,-0.13,1,152700,0,0.5475],[0,1,0,1,0,0.0,2,93500,0,0.5226],[1,0,0,1,1,-1.41,3,69200,0,0.688],[1,0,0,1,1,2.3,0,67600,1,0.4995],[1,0,0,0,1,1.33,0,119100,0,0.4417],[0,0,1,0,1,2.58,0,86900,0,0.431],[1,0,0,1,0,1.43,1,81400,1,0.4351],[1,1,0,1,1,1.48,2,68300,0,0.3275],[1,0,0,1,1,-1.06,2,115600,0,0.6864],[0,1,0,1,1,3.06,0,61900,0,0.4525],[0,1,0,1,1,-3.5,4,63900,0,0.7915],[0,0,0,0,1,-0.19,0,91700,1,0.732],[0,0,0,0,1,-0.15,1,97800,0,0.7108],[0,0,0,1,1,3.17,0,56800,1,0.6329],[0,0,0,0,1,-0.28,0,130100,1,0.7371],[1,0,0,1,1,-0.99,4,52100,0,0.64],[0,1,0,1,0,1.91,0,195400,0,0.4317],[0,0,0,0,1,-0.07,2,217400,1,0.6862],[1,0,1,1,0,-0.95,2,74000,0,0.4636],[0,0,1,1,0,0.12,3,90500,0,0.562],[0,0,0,0,1,2.14,1,72700,1,0.5587],[0,1,0,1,1,-2.39,4,174500,0,0.7335],[1,0,0,0,0,2.25,0,73300,1,0.2854],[0,1,0,1,1,2.8,1,129500,1,0.4479],[1,0,1,0,1,2.01,0,50600,1,0.2867],[1,0,0,1,1,0.26,1,47800,1,0.6212],[0,0,0,1,1,0.07,2,257000,0,0.7781],[1,1,0,0,0,4.94,0,70600,1,0.0784],[0,0,0,1,0,1.91,0,107500,1,0.6207],[0,1,1,1,1,1.4,1,111300,0,0.4295],[0,0,0,1,0,1.84,1,133400,1,0.6032],[0,0,0,0,0,-2.47,4,85000,1,0.7052],[1,0,0,1,1,0.59,1,74900,1,0.5985],[0,0,1,1,1,2.88,0,80200,1,0.5371],[1,0,1,0,1,2.59,0,196100,1,0.2536],[0,0,1,1,0,0.8,0,57100,1,0.5827],[1,0,0,0,1,-0.13,0,199600,1,0.547],[0,0,0,0,1,0.89,2,102500,1,0.6234],[0,0,0,1,1,0.03,1,276800,0,0.7958],[0,0,0,1,1,-1.78,2,71800,0,0.857],[1,1,0,0,0,1.0,2,93800,1,0.1808],[1,0,0,0,1,1.61,0,101700,1,0.4218],[0,0,0,0,1,0.42,0,63900,0,0.6959],[1,1,0,0,0,0.54,0,164500,1,0.2333],[1,0,0,0,0,3.43,0,59800,1,0.221],[0,0,0,0,1,0.12,2,146100,0,0.6742],[0,0,0,0,1,1.83,0,160200,0,0.6034],[1,0,0,0,0,1.97,0,100800,1,0.3022],[1,0,0,0,0,-1.6,1,90200,0,0.5257],[1,0,1,1,0,1.6,1,120300,0,0.312],[1,0,0,1,1,1.38,0,85400,0,0.5657],[0,1,0,0,1,0.45,0,340700,0,0.513],[0,0,0,0,1,0.17,0,128900,0,0.711],[0,0,0,0,1,-2.41,4,118300,0,0.7811],[1,0,0,0,1,-0.06,2,62100,1,0.4951],[0,0,0,0,1,1.48,0,47400,0,0.6274],[0,0,0,1,0,1.57,1,101200,0,0.6218],[0,0,1,1,1,0.42,4,132200,1,0.6191],[0,0,1,1,1,3.38,1,101400,1,0.4775],[0,0,0,0,0,4.16,0,50800,0,0.338],[0,1,0,1,1,-1.07,4,113700,0,0.6525],[0,0,0,1,0,0.04,2,62600,0,0.6998],[0,1,0,1,1,1.09,0,54600,1,0.5939],[1,1,0,0,1,-2.13,3,123600,1,0.4302],[0,0,0,1,1,0.42,0,215300,0,0.7927],[0,0,0,1,0,-0.47,0,114300,0,0.7653],[0,0,1,1,0,2.69,1,80200,0,0.4237],[1,0,1,0,1,1.31,0,81300,0,0.3299],[0,1,0,0,0,0.23,0,58600,1,0.4252],[1,0,1,0,0,-2.74,4,153300,0,0.4186],[1,0,0,1,1,1.12,2,85300,0,0.5379],[0,0,0,1,1,0.63,0,60800,0,0.7825],[1,0,0,0,1,-1.06,2,149600,0,0.5671],[1,0,0,0,0,1.75,0,70800,1,0.3158],[1,0,0,1,1,2.52,0,117200,1,0.4836],[1,0,0,1,1,0.56,1,72500,1,0.6006],[1,0,0,0,1,1.73,0,110300,0,0.4133],[1,1,0,1,0,-0.07,2,99000,0,0.3345],[0,0,1,0,1,2.98,0,74000,0,0.4029],[1,0,1,1,1,1.84,0,275400,1,0.4136],[1,0,0,1,0,0.25,0,108400,0,0.5435],[1,0,0,0,1,2.21,1,48900,1,0.3582],[0,0,1,1,1,-0.99,3,51700,0,0.7287],[0,0,1,1,1,1.71,0,132700,1,0.6195],[0,1,0,0,1,1.16,1,67700,0,0.4385],[1,1,0,1,0,1.85,1,27300,1,0.2405],[1,0,0,0,1,-1.25,2,118500,0,0.5806],[1,1,1,0,0,1.77,1,89600,1,0.1071],[1,0,0,1,1,0.18,2,96200,1,0.6045],[0,0,0,0,0,3.51,0,118200,1,0.3813],[0,1,0,0,1,0.45,3,65600,1,0.4429],[1,1,0,1,0,0.21,1,104900,0,0.3373],[0,0,0,0,1,2.52,0,138300,1,0.5547],[1,0,0,0,0,-0.8,1,114300,0,0.4679],[0,0,1,0,0,1.55,0,62700,0,0.4021],[0,1,0,0,1,-2.25,3,93000,1,0.6347],[0,0,0,0,0,0.76,3,153700,1,0.5077],[0,0,0,0,1,-1.27,4,24700,1,0.7195],[0,0,0,0,1,1.72,1,89000,1,0.5885],[0,0,0,0,0,2.0,0,161900,1,0.4883],[0,0,0,1,1,1.85,0,149300,0,0.7165],[1,0,0,1,1,-1.24,3,95300,0,0.6773],[0,0,1,0,1,2.85,0,72000,1,0.412],[0,1,0,0,1,2.73,0,240200,0,0.3525],[1,1,1,1,1,0.11,1,69900,1,0.3298],[0,1,1,1,0,-0.29,0,80400,1,0.4706],[0,1,0,0,0,-0.83,3,153200,0,0.4314],[1,1,1,0,1,1.75,1,137000,1,0.1548],[0,0,0,0,1,0.67,3,123200,0,0.6163],[0,0,0,1,1,1.75,0,162800,0,0.7223],[1,0,0,1,1,1.87,0,146400,0,0.5306],[0,0,0,0,0,0.69,1,86700,0,0.5594],[0,1,1,1,1,1.51,2,116900,1,0.399],[1,0,0,1,1,0.33,0,332400,0,0.6384],[0,1,1,0,1,-0.73,3,95300,1,0.409],[0,0,1,0,1,-0.03,1,195100,1,0.5949],[0,0,1,0,0,1.52,2,178900,1,0.3599],[1,0,0,0,0,0.8,1,359300,1,0.3562],[1,1,0,0,1,-0.3,2,42400,1,0.328],[1,0,0,0,0,2.58,0,134400,1,0.2663],[0,0,0,0,0,-0.42,2,108600,0,0.6145],[0,0,1,1,1,-0.4,2,165100,0,0.7132],[1,0,0,0,1,0.72,0,100000,0,0.4856],[1,1,0,0,0,-2.53,2,178600,1,0.3802],[1,1,1,1,1,1.83,0,107000,1,0.2472],[0,0,1,1,0,0.88,3,159300,0,0.5073],[1,0,0,1,1,-0.03,2,85700,0,0.6189],[1,0,1,0,0,1.03,0,83600,1,0.2602],[0,1,1,0,1,0.35,1,93800,1,0.3792],[0,0,1,1,1,-1.25,2,78600,1,0.7608],[0,1,1,1,0,-2.21,3,38200,1,0.5391],[0,0,1,0,1,-0.16,3,64700,1,0.5583],[0,0,0,0,1,-0.34,4,79500,1,0.6621],[0,0,0,0,1,1.13,0,86800,0,0.6508],[1,0,0,0,1,0.59,1,64800,0,0.4716],[1,1,0,0,1,0.68,2,96800,1,0.2687],[0,0,0,0,0,1.93,0,59300,0,0.4934],[1,0,0,0,1,2.15,1,71100,1,0.3622],[0,0,0,1,0,0.47,0,50700,0,0.7129],[0,1,0,1,1,0.67,3,326600,1,0.5548],[1,0,0,0,0,-1.06,2,102400,1,0.4633],[1,0,0,0,1,-1.0,0,69400,1,0.6084],[1,0,0,0,0,1.48,0,90900,1,0.3329],[1,0,0,1,1,1.49,1,84800,1,0.5346],[0,0,1,0,0,1.88,2,88700,1,0.3363],[1,1,1,0,1,-0.47,2,138300,1,0.2408],[1,0,0,1,1,2.19,0,188900,0,0.5074],[0,0,1,0,1,0.99,0,56900,0,0.5456],[0,0,0,0,0,-1.7,2,117100,1,0.6978],[0,1,0,1,1,-0.51,2,91300,1,0.6583],[0,1,0,1,1,-0.21,1,45400,1,0.6598],[0,0,1,1,0,4.42,0,121000,1,0.3286],[0,0,0,0,1,-0.1,2,110000,0,0.688],[1,0,0,0,1,-1.15,1,42100,0,0.5963],[0,0,0,0,1,1.11,0,136000,0,0.6521],[0,1,0,1,1,1.38,0,83000,0,0.5735],[0,0,0,1,0,-0.3,1,109600,1,0.7386],[0,0,1,1,1,-0.11,1,191700,0,0.7152],[1,0,0,1,1,-0.47,2,106600,0,0.6485],[1,0,0,0,1,-0.21,4,139100,1,0.4591],[0,0,1,1,1,1.02,1,99000,0,0.6441],[0,1,0,0,1,1.26,2,87700,0,0.4085],[1,0,0,0,1,0.06,0,146900,0,0.5333],[0,0,1,1,0,2.21,0,70000,0,0.4814],[0,1,1,1,1,0.53,2,179200,0,0.4686],[0,1,1,1,0,2.31,0,93700,0,0.2951],[1,0,0,1,0,0.62,0,137900,0,0.5168],[1,1,0,0,1,4.31,0,111300,1,0.1342],[1,0,0,1,1,0.75,0,175500,0,0.6099],[0,1,1,0,1,1.98,0,123400,1,0.295],[0,1,1,1,1,-0.86,2,352100,1,0.5688],[1,0,1,1,1,0.5,1,126300,0,0.4863],[1,0,0,0,1,0.32,0,163900,0,0.5145],[0,0,0,0,1,-1.48,2,203900,1,0.7668],[1,0,0,0,1,-0.83,4,77100,0,0.5039],[1,0,0,0,1,-2.51,1,62000,0,0.6865],[1,1,0,0,0,0.42,1,179700,1,0.2228],[1,0,0,0,0,-0.62,1,93200,0,0.4549],[0,0,0,0,0,-2.82,2,110600,0,0.7616],[0,0,0,0,1,2.13,0,213000,0,0.5824],[1,0,1,0,1,-2.04,3,113200,1,0.495],[1,0,1,1,1,2.12,0,158700,1,0.3941],[1,1,0,1,1,1.94,1,169100,1,0.3189],[1,0,0,0,1,0.0,3,188500,1,0.4674],[1,0,1,1,0,1.24,1,65300,1,0.3348],[1,1,0,1,0,1.19,1,37000,1,0.2771],[0,0,0,1,0,-0.41,1,109300,0,0.7447],[0,0,1,0,1,-0.5,2,50200,0,0.6051],[1,0,0,0,0,-1.08,4,71700,1,0.4185],[0,0,0,0,1,0.83,0,104900,0,0.6702],[0,0,1,0,1,-1.61,4,140000,0,0.6365],[1,1,0,1,1,0.37,2,137900,1,0.4018],[0,1,1,1,1,-0.48,4,130900,1,0.4948],[0,1,0,1,1,0.13,1,166000,0,0.6374],[0,0,0,1,1,1.14,0,67300,0,0.7563],[1,0,0,0,0,-0.07,2,222100,0,0.3932],[0,0,0,1,0,-1.28,1,46900,0,0.7896],[0,0,0,0,1,1.03,1,79900,0,0.6359],[1,0,0,0,1,4.87,0,60600,1,0.2211],[0,1,0,0,1,1.34,0,70600,0,0.4488],[0,0,0,0,1,-1.54,4,130400,1,0.735],[0,1,0,1,1,-0.26,2,117300,1,0.6418],[0,0,1,1,0,-1.69,3,114700,1,0.6842],[1,1,0,1,0,0.33,0,74000,1,0.3507],[0,1,0,1,1,1.09,0,122600,0,0.5939],[1,0,0,1,1,-0.49,4,207500,0,0.606],[0,0,0,1,1,0.55,0,156900,1,0.7864],[0,0,0,0,1,1.44,0,170300,0,0.6301],[0,1,0,1,1,3.91,1,223700,1,0.3704],[0,1,0,0,0,-1.92,2,158300,0,0.5333],[0,0,0,0,1,3.97,0,154900,0,0.4502],[1,0,0,0,1,0.47,0,51500,1,0.5037],[0,0,1,1,1,1.45,0,94500,1,0.6371],[0,0,0,0,1,3.23,0,73200,1,0.5036],[0,1,0,0,0,1.37,1,67800,0,0.3262],[0,0,0,1,1,0.97,2,51700,0,0.7299],[0,0,0,0,0,1.58,1,98400,1,0.4952],[0,0,0,0,1,2.82,0,207200,1,0.5332],[0,0,0,1,1,4.13,0,142700,0,0.5663],[1,1,1,0,1,2.05,0,69600,1,0.1557],[1,0,1,1,0,0.71,1,143600,1,0.3698],[0,0,0,1,1,1.78,0,153700,1,0.7206],[1,0,1,0,1,-0.2,3,48600,1,0.3652],[1,1,1,0,0,1.6,0,122700,1,0.1216],[0,0,1,1,1,-0.74,1,109300,1,0.7508],[0,0,1,0,1,2.35,0,61900,0,0.4474],[1,1,1,1,1,0.67,0,74100,1,0.3149],[1,0,0,1,0,1.79,1,128300,1,0.4096],[0,0,1,0,1,1.16,0,188700,0,0.5333],[0,0,0,0,0,-0.5,2,151900,1,0.62],[1,1,1,1,0,1.0,0,56800,1,0.2158],[1,0,1,1,1,-1.62,4,65200,0,0.5689],[1,0,0,0,0,-0.78,2,137000,1,0.4432],[0,0,0,1,0,1.58,1,133600,1,0.6211],[1,1,0,1,0,-0.51,1,51300,0,0.3854],[0,1,0,0,1,1.69,0,98400,0,0.4238],[1,0,0,1,1,0.01,0,120700,1,0.6595],[1,1,1,0,1,0.49,0,225600,0,0.2247],[1,1,1,0,1,-0.94,1,77000,1,0.2853],[0,0,0,0,1,2.01,1,274100,1,0.568],[0,0,0,1,0,-0.16,2,158800,0,0.7118],[1,0,1,1,0,1.03,0,47800,1,0.3701],[1,0,1,0,0,2.4,1,135700,0,0.1772],[0,0,0,0,1,0.81,2,140400,0,0.6289],[0,0,0,0,1,0.87,2,107500,1,0.6248],[1,0,0,1,0,-0.85,1,66100,1,0.5985],[0,0,0,1,1,2.67,0,151400,0,0.6659],[1,0,1,0,1,3.15,0,187300,0,0.2242],[0,0,1,1,1,-0.23,0,164500,0,0.7406],[0,0,1,0,1,-1.68,2,108200,0,0.6832],[1,0,1,0,1,-0.95,2,168200,1,0.4398],[0,0,1,0,1,2.11,0,52400,0,0.4647],[0,1,0,0,0,0.04,1,207100,0,0.4157]];
+const COEF = {b0:0.53, occupato:-0.80, abusi:-0.77, manutenzione_scarsa:-0.48, zona_alta_domanda:0.51, residenziale:0.42, ratio10:-0.29, deserte:-0.09};
+const A = {r:0.10, tSold:0.75, costSold:2000, recDes:0.75, tDes:2, costDes:4000, recAlt:0.70, tAlt:0.25, costAlt:500};
+const RIBASSO = 0.75;
+const RES = ["Appartamento","Villetta"], TIPI = ["Appartamento","Villetta","Box","Locale commerciale","Terreno"];
+const ICON = {Appartamento:"i-home", Villetta:"i-villa", Box:"i-garage", "Locale commerciale":"i-shop", Terreno:"i-land"};
+const MESI = ["gen","feb","mar","apr","mag","giu","lug","ago","set","ott","nov","dic"];
+let nf; try { nf = new Intl.NumberFormat("it-IT",{maximumFractionDigits:0,useGrouping:"always"}); nf.format(1); } catch(e){ nf = new Intl.NumberFormat("it-IT",{maximumFractionDigits:0}); }
+const eur = v => nf.format(Math.round(v)) + " €";
+const eurK = v => nf.format(Math.round(v/100)*100) + " €";
+const kEur = v => nf.format(Math.round(v/1000)) + "k €";
+const mln = (v,d=1) => (v/1e6).toLocaleString("it-IT",{minimumFractionDigits:d,maximumFractionDigits:d}) + " mln €";
+const pct = v => Math.round(v*100) + "%";
+const f1 = v => v.toLocaleString("it-IT",{minimumFractionDigits:1,maximumFractionDigits:1});
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+const dateOf = d => { if(!d) return "–"; const [y,m,g]=d.split("-"); return `${Number(g)} ${MESI.at(Number(m)-1)} ${y}`; };
+const $ = id => document.getElementById(id);
+const RM = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+function countUp(el,to,fmt,ms=900){ if(RM){ el.textContent=fmt(to); return; } const t0=performance.now(); const st=t=>{ const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3); el.textContent=fmt(to*e); if(k<1) requestAnimationFrame(st); }; requestAnimationFrame(st); }
+
+/* modello */
+function features(c){ return {occupato:c.occupato?1:0, abusi:c.abusi?1:0, manutenzione_scarsa:c.manutenzione?1:0, zona_alta_domanda:c.zona?1:0, residenziale:RES.includes(c.tipo)?1:0, ratio10:(c.base/c.mercato-0.70)/0.10, deserte:c.deserte||0}; }
+function prob(c){ const x=features(c); let l=COEF.b0; for(const k in x) l+=COEF[k]*x[k]; return 1/(1+Math.exp(-l)); }
+function values(V,p){ const sold=V/Math.pow(1+A.r,A.tSold)-A.costSold, des=A.recDes*V/Math.pow(1+A.r,A.tDes)-A.costDes, alt=A.recAlt*V/Math.pow(1+A.r,A.tAlt)-A.costAlt, ev=p*sold+(1-p)*des; return {sold,des,alt,ev,rec:ev>=alt?"asta":"acc",diff:Math.abs(ev-alt)}; }
+const minOffer = ev => (ev + A.costAlt) * Math.pow(1+A.r, A.tAlt);
+function analyse(c){ const p=prob(c), v=values(c.base,p); return {p, v, soglia:minOffer(v.ev)}; }
+function path(c){ const out=[]; for(let j=0;j<5;j++){ const base=c.base*Math.pow(RIBASSO,j); out.push({n:(c.deserte||0)+j+1, base, p:prob({...c, base, deserte:(c.deserte||0)+j})}); } return out; }
+function factors(c){
+  const p=prob(c), x=features(c), out=[], d=(alt)=>Math.round((p-prob({...c,...alt}))*100);
+  if(x.occupato) out.push(["Immobile occupato", d({occupato:0})]);
+  if(x.abusi) out.push(["Abusi edilizi", d({abusi:0})]);
+  if(x.manutenzione_scarsa) out.push(["Servono lavori importanti", d({manutenzione:0})]);
+  if(x.zona_alta_domanda) out.push(["Zona richiesta", d({zona:0})]);
+  if(x.residenziale) out.push(["È un'abitazione", Math.round((p-prob({...c,tipo:"Box"}))*100)]);
+  else out.push([`${c.tipo}, non un'abitazione`, Math.round((p-prob({...c,tipo:"Appartamento"}))*100)]);
+  const r=c.base/c.mercato; if(Math.abs(r-0.70)>0.015) out.push([`Partenza al ${pct(r)} del valore`, Math.round((p-prob({...c,base:0.70*c.mercato}))*100)]);
+  if(c.deserte>0) out.push([`${c.deserte} ${c.deserte===1?"asta deserta":"aste deserte"} alle spalle`, d({deserte:0})]);
+  return out.filter(f=>f[1]!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+}
+
+/* perizie di esempio */
+const PERIZIA_A = `TRIBUNALE DI MONZA – Esecuzione immobiliare R.G.E. 412/2025
+Relazione di stima ex art. 173-bis disp. att. c.p.c. – Lotto unico
+
+Identificazione del bene: appartamento al secondo piano di un condominio in Monza (MB), quartiere San Biagio, composto da ingresso, soggiorno, cucina abitabile, due camere e bagno; superficie commerciale 92 mq, con cantina pertinenziale.
+
+Stato di possesso: l'immobile risulta occupato dal debitore esecutato e dal suo nucleo familiare. Non risultano contratti di locazione opponibili alla procedura.
+
+Regolarità edilizia e urbanistica: lo stato dei luoghi è conforme alle planimetrie catastali e al titolo edilizio. Non si rilevano opere abusive.
+
+Stato di manutenzione: buono. Impianti funzionanti, infissi sostituiti nel 2018.
+
+Spese condominiali: insoluti degli ultimi due anni pari a 2.350 euro.
+
+Valutazione: valore di mercato stimato 176.500 euro. Applicate le riduzioni previste dall'art. 568 c.p.c., il prezzo base d'asta è fissato in 150.000 euro.
+
+Esperimenti di vendita: primo tentativo di vendita.`;
+const PERIZIA_B = `TRIBUNALE DI ALESSANDRIA – Esecuzione immobiliare R.G.E. 87/2023
+Relazione di stima ex art. 173-bis disp. att. c.p.c. – Lotto 1
+
+Identificazione del bene: villetta indipendente su due livelli nel Comune di Montaldeo (AL), piccolo centro collinare; superficie commerciale 140 mq con giardino di circa 300 mq.
+
+Stato di possesso: l'immobile è occupato da terzi senza titolo opponibile alla procedura.
+
+Regolarità edilizia: è presente una veranda chiusa di circa 18 mq realizzata senza titolo e non sanabile; il costo di ripristino, stimato in 6.500 euro, è già detratto dal valore.
+
+Stato di manutenzione: scarso. Infiltrazioni dalla copertura, impianto elettrico non a norma, serramenti da sostituire.
+
+Valutazione: valore di mercato stimato aggiornato 94.800 euro. Prezzo base dell'esperimento in corso: 90.000 euro.
+
+Esperimenti di vendita: un precedente tentativo di vendita è andato deserto.`;
+const EX = {
+  A:{perizia:PERIZIA_A, data:{tipo:"Appartamento", comune:"Monza", trib:"Monza", rge:"412/2025", base:150000, mercato:176500, deserte:0, occupato:1, abusi:0, manutenzione:0, zona:1,
+     ev:{occupato:"occupato dal debitore esecutato e dal suo nucleo familiare", abusi:"Non si rilevano opere abusive", manutenzione:"Stato di manutenzione: buono", zona:"Monza (MB), quartiere San Biagio"},
+     crit:[{t:"Spese condominiali non pagate", q:"insoluti degli ultimi due anni pari a 2.350 euro"}], extra:2350}},
+  B:{perizia:PERIZIA_B, data:{tipo:"Villetta", comune:"Montaldeo", trib:"Alessandria", rge:"87/2023", base:90000, mercato:94800, deserte:1, occupato:1, abusi:1, manutenzione:1, zona:0,
+     ev:{occupato:"occupato da terzi senza titolo opponibile", abusi:"veranda chiusa di circa 18 mq realizzata senza titolo e non sanabile", manutenzione:"Infiltrazioni dalla copertura, impianto elettrico non a norma", zona:"piccolo centro collinare"},
+     crit:[{t:"Veranda abusiva non sanabile da demolire", q:"il costo di ripristino, stimato in 6.500 euro"},{t:"Impianto elettrico da rifare e tetto con infiltrazioni", q:"impianto elettrico non a norma"}], extra:6500}}
+};
+
+/* portafoglio di esempio */
+const SEED = [
+  {id:"POS-2041", tipo:"Appartamento", comune:"Monza", trib:"Monza", rge:"412/2025", asta:"2026-11-18", base:150000, mercato:176500, occupato:1, abusi:0, manutenzione:0, zona:1, deserte:0, ex:"A"},
+  {id:"POS-2042", tipo:"Villetta", comune:"Montaldeo", trib:"Alessandria", rge:"87/2023", asta:"2026-11-12", base:90000, mercato:94800, occupato:1, abusi:1, manutenzione:1, zona:0, deserte:1, ex:"B"},
+  {id:"POS-2043", tipo:"Box", comune:"Bergamo", trib:"Bergamo", rge:"233/2022", asta:"2026-12-03", base:25000, mercato:34000, occupato:0, abusi:0, manutenzione:0, zona:1, deserte:2},
+  {id:"POS-2044", tipo:"Appartamento", comune:"Torino", trib:"Torino", rge:"1088/2024", asta:"2026-11-25", base:118000, mercato:160000, occupato:0, abusi:0, manutenzione:0, zona:1, deserte:1},
+  {id:"POS-2045", tipo:"Locale commerciale", comune:"Lecce", trib:"Lecce", rge:"301/2024", asta:"2026-12-10", base:64000, mercato:70000, occupato:1, abusi:1, manutenzione:0, zona:0, deserte:0},
+  {id:"POS-2046", tipo:"Appartamento", comune:"Napoli", trib:"Napoli", rge:"2214/2021", asta:"2026-11-20", base:96000, mercato:135000, occupato:1, abusi:0, manutenzione:1, zona:1, deserte:2},
+  {id:"POS-2047", tipo:"Terreno", comune:"Sassari", trib:"Sassari", rge:"95/2020", asta:"2027-01-14", base:38000, mercato:52000, occupato:0, abusi:0, manutenzione:0, zona:0, deserte:3},
+  {id:"POS-2048", tipo:"Appartamento", comune:"Bologna", trib:"Bologna", rge:"640/2025", asta:"2026-12-16", base:182000, mercato:230000, occupato:0, abusi:0, manutenzione:0, zona:1, deserte:0},
+  {id:"POS-2049", tipo:"Villetta", comune:"Treviglio", trib:"Bergamo", rge:"512/2024", asta:"2026-12-02", base:210000, mercato:236000, occupato:1, abusi:1, manutenzione:0, zona:0, deserte:0},
+  {id:"POS-2050", tipo:"Appartamento", comune:"Bari", trib:"Bari", rge:"778/2023", asta:"2026-11-27", base:72000, mercato:92000, occupato:0, abusi:1, manutenzione:1, zona:1, deserte:1},
+  {id:"POS-2051", tipo:"Appartamento", comune:"Pavia", trib:"Pavia", rge:"156/2021", asta:"2027-01-20", base:88000, mercato:126000, occupato:1, abusi:0, manutenzione:0, zona:1, deserte:3},
+  {id:"POS-2052", tipo:"Locale commerciale", comune:"Rovigo", trib:"Rovigo", rge:"44/2024", asta:"2026-12-09", base:130000, mercato:150000, occupato:0, abusi:1, manutenzione:1, zona:0, deserte:1}
+].map(c=>({...c, demo:true, ...(c.ex?{ev:EX[c.ex].data.ev, crit:EX[c.ex].data.crit, extra:EX[c.ex].data.extra, perizia:EX[c.ex].perizia}:{})}));
+
+/* salvataggio nel browser */
+const KEY="recovery-studio-v1"; let store={mine:[], dec:{}, hideEx:false};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s&&Array.isArray(s.mine)) store={...store,...s}; }catch(e){}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+const allCases = () => [...store.mine, ...(store.hideEx?[]:SEED)];
+const findCase = id => store.mine.find(c=>c.id===id) || SEED.find(c=>c.id===id);
+const label = c => `${c.tipo} a ${c.comune||"comune non indicato"}`;
+const recTag = r => r==="asta" ? `<span class="tag asta"><i></i>Tentare l'asta</span>` : `<span class="tag acc"><i></i>Chiudere un accordo</span>`;
+const stTag = id => { const d=store.dec[id]; return d ? `<span class="tag ok"><i></i>${d.other?"Strada cambiata":"Confermato"}</span>` : `<span class="tag wait"><i></i>Da decidere</span>`; };
+function newId(){ let n=store.mine.length+1, id; do{ id="AN-"+String(n++).padStart(3,"0"); }while(store.mine.some(c=>c.id===id)); return id; }
+
+/* navigazione */
+const VIEWS=["analizza","scheda","portafoglio","risultati","guida"]; let shown={}, skipTop=false, curId=null;
+function show(){
+  const h=(location.hash||"").slice(1), [v0,arg]=h.split("/"); let v=VIEWS.includes(v0)?v0:"analizza";
+  if(v==="scheda"){ const c=arg&&findCase(decodeURIComponent(arg)); if(!c){ v="portafoglio"; } else { curId=c.id; renderScheda(); } }
+  document.querySelectorAll(".view").forEach(s=>s.classList.toggle("on",s.id==="v-"+v));
+  const navV = v==="scheda" ? "portafoglio" : v;
+  document.querySelectorAll(".nav-a").forEach(a=>a.classList.toggle("on",a.dataset.v===navV));
+  if(v==="analizza") renderRecent();
+  if(v==="portafoglio") renderPortfolio();
+  if(v==="scheda") setTimeout(tocUpdate,60);
+  if(v==="risultati" && !shown.risultati){ shown.risultati=true; animateImpact(); }
+  if(!skipTop) window.scrollTo(0,0); skipTop=false;
+}
+window.addEventListener("hashchange",show);
+const go = h => { if(location.hash!=="#"+h) location.hash=h; else show(); };
+
+/* menu */
+const nav=$("nav");
+$("burger").addEventListener("click",()=>{ const open=!nav.classList.contains("open"); nav.classList.toggle("open",open); $("burger").setAttribute("aria-expanded",String(open)); });
+document.querySelectorAll(".nav-a").forEach(a=>a.addEventListener("click",()=>{ nav.classList.remove("open"); }));
+document.addEventListener("click",e=>{ const a=e.target.closest("a[data-to]"); if(!a) return; e.preventDefault();
+  const v=a.dataset.go, to=$(a.dataset.to); nav.classList.remove("open"); $("burger").setAttribute("aria-expanded","false");
+  if(v && location.hash.split("/")[0]!=="#"+v){ skipTop=true; location.hash=v; }
+  setTimeout(()=>{ if(to.tagName==="DETAILS") to.open=true; to.scrollIntoView({behavior:RM?"auto":"smooth",block:"start"}); if(a.id==="btn-new") $("perizia").focus({preventScroll:true}); },50); });
+
+/* IA: dentro Claude usa Claude; sul sito usa /api/leggi-perizia; altrimenti niente */
+let aiMode=null, sampleFn=null;
+function aiState(){ $("btn-ai").disabled=!aiMode; $("btn-ai").title=aiMode?"":"Lettura con l'IA non collegata su questo sito: usa \"Compila a mano\" o un esempio";
+  $("ai-status").classList.toggle("off",!aiMode); $("ai-status-t").textContent = aiMode ? "IA collegata" : "IA non collegata"; }
+async function detectAI(){
+  if(window.claude && typeof window.claude.use==="function"){ try{ sampleFn=await window.claude.use("sample"); aiMode="claude"; return aiState(); }catch(e){} }
+  if(location.protocol.startsWith("http")){ try{ const r=await fetch("/api/leggi-perizia",{method:"GET"}); if(r.ok){ const j=await r.json(); if(j&&j.ok) aiMode="server"; } }catch(e){} }
+  aiState();
+}
+function prompt(txt){ return `Sei un analista di crediti deteriorati garantiti da immobili. Leggi la perizia di stima qui sotto ed estrai i dati richiesti.
+Rispondi SOLO con un oggetto JSON valido, senza testo prima o dopo, con queste chiavi:
+- "comune": stringa
+- "tribunale": stringa (solo il nome della città)
+- "rge": numero della procedura esecutiva nella forma "numero/anno", oppure null
+- "data_asta": data della prossima asta nel formato "AAAA-MM-GG" se indicata, altrimenti null
+- "tipologia": uno tra "Appartamento", "Villetta", "Box", "Locale commerciale", "Terreno"
+- "occupato": true se l'immobile è occupato dal debitore o da terzi, false se libero
+- "abusi": true se ci sono abusi o irregolarità edilizie o urbanistiche non sanate
+- "manutenzione_scarsa": true se lo stato di manutenzione è scarso o mediocre o servono lavori importanti
+- "zona_alta_domanda": true se il comune è capoluogo di provincia o in un'area metropolitana con mercato dinamico; false per piccoli centri
+- "prezzo_base": numero in euro (prezzo base d'asta)
+- "valore_mercato": numero in euro (valore di mercato stimato prima delle riduzioni)
+- "aste_deserte_prec": numero intero di tentativi di vendita precedenti andati deserti
+- "evidenze": oggetto con le chiavi "occupato", "abusi", "manutenzione_scarsa", "zona_alta_domanda", ciascuna con una citazione breve dal testo (al massimo 15 parole) che giustifica il valore
+- "criticita": elenco (massimo 5) di oggetti {"titolo": problema concreto per chi compra in al massimo 10 parole, "citazione": frase breve della perizia, al massimo 15 parole}; includi spese condominiali non pagate, vincoli, servitù, difformità, costi di sanatoria o ripristino, problemi di sgombero
+- "costi_extra": somma in euro dei costi a carico di chi compra indicati nella perizia (spese condominiali insolute, sanatorie, ripristini), oppure null
+Se un dato manca usa null.
+
+PERIZIA:
+${txt}`; }
+const LOGS=["Lettura dello stato di possesso…","Verifica della regolarità edilizia…","Analisi dello stato di manutenzione…","Ricerca di spese e vincoli…","Estrazione di prezzo e valore…"];
+async function readWithAI(txt){
+  if(aiMode==="claude"){ let out = typeof sampleFn.json==="function" ? await sampleFn.json(prompt(txt),{modelTier:"quick"}) : (await sampleFn(prompt(txt),{modelTier:"quick"})).text; if(typeof out==="string"){ const m=out.match(/\{[\s\S]*\}/); out=JSON.parse(m?m[0]:out); } return out; }
+  const r=await fetch("/api/leggi-perizia",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({testo:txt})}); const j=await r.json(); if(!r.ok) throw Object.assign(new Error(j.error||"errore"),{code:r.status===429?"rate_limited":"server"}); return j.dati;
+}
+const num = v => { const n=typeof v==="number"?v:parseFloat(String(v||"").replace(/[^\d.,]/g,"").replace(/\./g,"").replace(",",".")); return Number.isFinite(n)?n:null; };
+function fromAI(o, txt){
+  const ev=o.evidenze||{}, crit=(Array.isArray(o.criticita)?o.criticita:[]).filter(x=>x&&(x.titolo||x.title)).slice(0,5).map(x=>({t:String(x.titolo||x.title), q:x.citazione?String(x.citazione):""}));
+  const da = typeof o.data_asta==="string" && /^\d{4}-\d{2}-\d{2}$/.test(o.data_asta) ? o.data_asta : null;
+  return {id:newId(), created:new Date().toISOString().slice(0,10), tipo:TIPI.includes(o.tipologia)?o.tipologia:"Appartamento", comune:o.comune||"", trib:o.tribunale||"", rge:o.rge||"", asta:da,
+    base:num(o.prezzo_base)||0, mercato:num(o.valore_mercato)||0, deserte:Number.isFinite(o.aste_deserte_prec)?o.aste_deserte_prec:0,
+    occupato:!!o.occupato, abusi:!!o.abusi, manutenzione:!!o.manutenzione_scarsa, zona:!!o.zona_alta_domanda,
+    ev:{occupato:ev.occupato||"", abusi:ev.abusi||"", manutenzione:ev.manutenzione_scarsa||"", zona:ev.zona_alta_domanda||""}, crit, extra:num(o.costi_extra), perizia:txt.slice(0,60000), source:"ai"};
+}
+function addCase(c){ store.mine.unshift(c); save(); go("scheda/"+encodeURIComponent(c.id)); }
+
+/* analizza */
+const aiBtn=$("btn-ai"), drop=$("drop"), ta=$("perizia");
+aiBtn.addEventListener("click", async ()=>{
+  const txt=ta.value.trim(), m=$("ai-msg");
+  if(txt.length<80){ m.className="msg err"; m.textContent="Incolla prima il testo di una perizia (o caricane il PDF)."; return; }
+  if(!aiMode) return;
+  m.className="msg"; m.textContent=""; aiBtn.disabled=true; drop.classList.add("scanning");
+  let li=0; $("log").textContent="› "+LOGS[0]; const timer=setInterval(()=>{ li=(li+1)%LOGS.length; $("log").textContent="› "+LOGS[li]; },900);
+  try{ const o=await readWithAI(txt); const c=fromAI(o,txt); $("log").textContent="✓ Lettura completata"; ta.value=""; addCase(c); }
+  catch(err){ $("log").textContent=""; m.className="msg err"; m.textContent = err&&err.code==="rate_limited" ? "Troppe richieste ravvicinate: riprova tra un minuto o usa «Compila a mano»." : err&&err.code==="not_granted" ? "Lettura non autorizzata: usa «Compila a mano»." : "Non è stato possibile leggere la perizia: riprova o usa «Compila a mano»."; }
+  finally{ clearInterval(timer); drop.classList.remove("scanning"); aiState(); }
+});
+$("btn-manual").addEventListener("click",()=>{ const txt=ta.value.trim(); const c={id:newId(), created:new Date().toISOString().slice(0,10), tipo:"Appartamento", comune:"", trib:"", rge:"", asta:null, base:0, mercato:0, deserte:0, occupato:false, abusi:false, manutenzione:false, zona:false, ev:{}, crit:[], extra:null, perizia:txt.slice(0,60000), source:"manual"}; ta.value=""; addCase(c); setTimeout(()=>{ $("s-dati").open=true; $("s-dati").scrollIntoView({behavior:"auto",block:"start"}); },80); });
+document.querySelectorAll("[data-ex]").forEach(b=>b.addEventListener("click",()=>{
+  const ex=EX[b.dataset.ex]; ta.value=ex.perizia; $("ai-msg").textContent="";
+  if(aiMode){ aiBtn.click(); return; }
+  const c={id:newId(), created:new Date().toISOString().slice(0,10), ...JSON.parse(JSON.stringify(ex.data)), asta:null, perizia:ex.perizia, source:"esempio"}; ta.value=""; addCase(c);
+}));
+/* PDF */
+let pdfLib=null;
+function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
+async function pdfText(file){
+  if(!pdfLib){ await loadScript("https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"); pdfLib=window.pdfjsLib; pdfLib.GlobalWorkerOptions.workerSrc="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js"; }
+  const doc=await pdfLib.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise; let out="";
+  for(let i=1;i<=Math.min(doc.numPages,80);i++){ const page=await doc.getPage(i), tc=await page.getTextContent(); out+=tc.items.map(it=>it.str+(it.hasEOL?"\n":" ")).join("")+"\n\n"; }
+  return out.replace(/[ \t]+\n/g,"\n").trim();
+}
+async function takeFile(file){
+  const m=$("ai-msg"); if(!file) return; m.className="msg";
+  if(/\.txt$/i.test(file.name)){ ta.value=await file.text(); m.textContent=`Testo caricato da ${file.name}.`; return; }
+  m.textContent=`Lettura del PDF ${file.name}…`;
+  try{ const t=await pdfText(file); if(t.length<200){ m.className="msg err"; m.textContent="Questo PDF sembra una scansione senza testo: copia e incolla il testo o usa «Compila a mano»."; return; } ta.value=t; m.className="msg good"; m.textContent=`PDF letto: ${nf.format(t.length)} caratteri. ${aiMode?"Ora premi «Analizza con l'IA».":"Ora usa «Compila a mano»."}`; }
+  catch(e){ m.className="msg err"; m.textContent="Non riesco a leggere questo PDF qui: apri il file, copia il testo e incollalo nel riquadro."; }
+}
+$("pdf").addEventListener("change",e=>{ takeFile(e.target.files[0]); e.target.value=""; });
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.add("drag"); }));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{ e.preventDefault(); drop.classList.remove("drag"); }));
+drop.addEventListener("drop",e=>{ const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) takeFile(f); });
+function renderRecent(){
+  const list=store.mine.slice(0,5);
+  $("recent").innerHTML = list.length ? list.map(c=>{ const ok=c.base>0&&c.mercato>0, a=ok?analyse(c):null; return `<div class="rc" data-open="${esc(c.id)}" tabindex="0"><span class="ico"><svg><use href="#${ICON[c.tipo]||"i-home"}"/></svg></span><div><b>${esc(label(c))}</b><small>${esc(c.id)} · analizzata il ${dateOf(c.created)}${c.trib?` · Tribunale di ${esc(c.trib)}`:""}</small></div><span class="mono ch-hide">${ok?pct(a.p):"–"}</span>${ok?recTag(a.v.rec):'<span class="tag wait"><i></i>Dati da completare</span>'}</div>`; }).join("")
+    : `<p class="empty">Ancora nessuna analisi. Incolla una perizia qui sopra o prova un esempio.</p>`;
+}
+$("recent").addEventListener("click",e=>{ const id=e.target.closest("[data-open]")?.dataset.open; if(id) go("scheda/"+encodeURIComponent(id)); });
+$("recent").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const id=e.target.closest("[data-open]")?.dataset.open; if(id) go("scheda/"+encodeURIComponent(id)); } });
+
+/* grafici della scheda (svg disegnati a mano) */
+function chartSteps(c){
+  const P=path(c), W=860, H=300, l=20, r=20, t=48, b=58, bw=(W-l-r)/P.length, maxB=P[0].base, cy=v=>t+(1-v)*(H-t-b);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Prezzo di partenza e probabilità di vendita a ogni tentativo d'asta">`;
+  [0,.25,.5,.75,1].forEach(g=>{ s+=`<line x1="${l}" x2="${W-r}" y1="${cy(g)}" y2="${cy(g)}" stroke="rgba(148,178,255,.08)"/>`; });
+  P.forEach((q,i)=>{ const x=l+i*bw, bh=(q.base/maxB)*(H-t-b)*0.62, y=H-b-bh;
+    s+=`<rect x="${x+bw*.2}" y="${y}" width="${bw*.6}" height="${bh}" rx="6" fill="url(#${i===0?"gBarOn":"gBar"})" opacity="${i===0?1:.75}"/>`;
+    s+=`<text x="${x+bw/2}" y="${H-b+18}" text-anchor="middle" font-size="12" fill="#EEF3FF" font-weight="600">${q.n}° asta${i===0?" (ora)":""}</text>`;
+    s+=`<text x="${x+bw/2}" y="${H-b+35}" text-anchor="middle" font-size="11.5" fill="#B4C1DE">${kEur(q.base)}</text>`; });
+  const pts=P.map((q,i)=>[l+i*bw+bw/2, cy(q.p)]);
+  s+=`<polyline points="${pts.map(p=>p.join(",")).join(" ")}" fill="none" stroke="#FBBF24" stroke-width="2.2" style="filter:drop-shadow(0 0 6px rgba(251,191,36,.7))"/>`;
+  pts.forEach((p,i)=>{ s+=`<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="#0B1533" stroke="#FBBF24" stroke-width="2.2"/><rect class="pill" x="${p[0]-21}" y="${p[1]-31}" width="42" height="20" rx="10" fill="#1A1505" stroke="rgba(251,191,36,.6)"/><text x="${p[0]}" y="${p[1]-17}" text-anchor="middle" font-size="12.5" font-weight="600" fill="#FCD34D">${pct(P[i].p)}</text>`; });
+  return s+`</svg>`;
+}
+function chartOffer(c,a,offer){
+  const W=860, H=140, l=20, r=20, lo=0.4, hi=1.05, X=v=>l+(Math.min(hi,Math.max(lo,v/c.base))-lo)/(hi-lo)*(W-l-r), y=58, ths=a.soglia, xs=X(ths);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Accordo minimo da accettare rispetto al prezzo di partenza">`;
+  s+=`<rect x="${l}" y="${y-9}" width="${xs-l}" height="18" rx="9" fill="rgba(34,211,238,.16)"/><rect x="${xs}" y="${y-9}" width="${W-r-xs}" height="18" rx="9" fill="rgba(52,211,153,.22)"/>`;
+  s+=`<text x="${l+4}" y="${y-18}" font-size="12" fill="#7DE7FB">sotto: meglio l'asta</text><text x="${W-r-4}" y="${y-18}" text-anchor="end" font-size="12" fill="#6EE7B7">sopra: accetta l'accordo</text>`;
+  [0.5,0.6,0.7,0.8,0.9,1].forEach(v=>{ const x=l+(v-lo)/(hi-lo)*(W-l-r); s+=`<line x1="${x}" x2="${x}" y1="${y+12}" y2="${y+17}" stroke="rgba(148,178,255,.35)"/><text x="${x}" y="${y+31}" text-anchor="middle" font-size="11" fill="#8492B4">${Math.round(v*100)}%</text>`; });
+  s+=`<line x1="${xs}" x2="${xs}" y1="${y-14}" y2="${y+14}" stroke="#EEF3FF" stroke-width="2.5"/><text x="${xs}" y="${y+52}" text-anchor="middle" font-size="12.5" font-weight="600" fill="#EEF3FF">accordo minimo ${kEur(ths)}</text>`;
+  if(offer>0){ const xo=X(offer), good=offer>=ths; s+=`<circle cx="${xo}" cy="${y}" r="8" fill="${good?"#34D399":"#FBBF24"}" stroke="#0B1533" stroke-width="3" style="filter:drop-shadow(0 0 6px ${good?"rgba(52,211,153,.8)":"rgba(251,191,36,.8)"})"/>`; }
+  return s+`<text x="${W/2}" y="${H-2}" text-anchor="middle" font-size="11" fill="#8492B4">percentuale del prezzo di partenza (${kEur(c.base)})</text></svg>`;
+}
+function chartFactors(F){
+  if(!F.length) return `<p class="empty">Nessun fattore particolare: la probabilità è vicina a quella di un immobile medio.</p>`;
+  const W=860, rowH=38, H=F.length*rowH+12, mid=520, sc=230/Math.max(25,...F.map(f=>Math.abs(f[1])));
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Effetto di ogni caratteristica sulla probabilità di vendita">`;
+  s+=`<line x1="${mid}" x2="${mid}" y1="0" y2="${H}" stroke="rgba(148,178,255,.3)"/>`;
+  F.forEach((f,i)=>{ const y=i*rowH+6, v=f[1], w=Math.abs(v)*sc, x=v>=0?mid:mid-w, col=v>=0?"#34D399":"#F87171";
+    s+=`<text x="250" y="${y+18}" text-anchor="end" font-size="14" fill="#EEF3FF">${esc(f[0])}</text>`;
+    s+=`<rect x="${x}" y="${y+5}" width="${Math.max(2,w)}" height="18" rx="5" fill="${col}" opacity=".85"/>`;
+    s+=`<text x="${v>=0?mid+w+8:mid-w-8}" y="${y+18}" text-anchor="${v>=0?"start":"end"}" font-size="12.5" font-weight="600" fill="${col}">${v>0?"+":"−"}${Math.abs(v)} punti</text>`; });
+  return s+`</svg>`;
+}
+
+/* scheda */
+const EVDEF={occ:"Qualcuno ci abita ancora", abusi:"Opere fatte senza permesso", man:"Manutenzione scarsa", zona:"Città o area dove gli immobili si vendono"};
+function fillForm(c){ $("f-tipo").value=c.tipo; $("f-comune").value=c.comune||""; $("f-trib").value=c.trib||""; $("f-base").value=c.base||""; $("f-mercato").value=c.mercato||""; $("f-deserte").value=c.deserte||0; $("f-occ").checked=!!c.occupato; $("f-abusi").checked=!!c.abusi; $("f-man").checked=!!c.manutenzione; $("f-zona").checked=!!c.zona;
+  const ev=c.ev||{}; [["occ","occupato"],["abusi","abusi"],["man","manutenzione"],["zona","zona"]].forEach(([k,f])=>{ const el=$("ev-"+k); el.textContent = ev[f] ? "«"+ev[f]+"»" : EVDEF[k]; el.className = ev[f] ? "ev" : ""; }); }
+function readForm(c){ Object.assign(c,{tipo:$("f-tipo").value, comune:$("f-comune").value.trim(), trib:$("f-trib").value.trim(), base:parseFloat($("f-base").value)||0, mercato:parseFloat($("f-mercato").value)||0, deserte:Math.max(0,parseInt($("f-deserte").value||"0",10)||0), occupato:$("f-occ").checked, abusi:$("f-abusi").checked, manutenzione:$("f-man").checked, zona:$("f-zona").checked}); }
+function renderScheda(){
+  const c=findCase(curId); if(!c) return; fillForm(c); renderSchedaBody(c);
+}
+function renderSchedaBody(c){
+  const ok=c.base>0&&c.mercato>0;
+  $("s-ico").innerHTML=`<svg><use href="#${ICON[c.tipo]||"i-home"}"/></svg>`;
+  $("s-label").textContent = `Scheda ${c.id}${c.demo?" · esempio":""}`;
+  $("s-title").textContent = label(c);
+  const sub=[]; if(c.trib) sub.push(`Tribunale di ${c.trib}`); if(c.rge) sub.push(`procedura n. ${c.rge}`); if(c.asta) sub.push(`prossima asta il ${dateOf(c.asta)}`); if(c.created) sub.push(`analizzata il ${dateOf(c.created)}`);
+  $("s-sub").textContent = sub.join(", ");
+  $("btn-del").classList.toggle("hide",!!c.demo);
+  const bn=$("s-banner"); bn.classList.toggle("hide", c.source!=="esempio"); bn.textContent="Questa scheda usa i dati della perizia di esempio, inseriti senza lettura IA perché qui l'IA non è collegata.";
+  const t=(c.deserte||0)+1;
+  $("s-facts").innerHTML=`<div><small>Prezzo di partenza</small><b>${ok?eur(c.base):"–"}</b></div><div><small>Valore di mercato</small><b>${ok?eur(c.mercato):"–"}</b></div><div><small>Sconto per chi compra</small><b>${ok?pct(1-c.base/c.mercato):"–"}</b></div><div><small>Tentativo d'asta</small><b>${t===1?"Primo":t+"°"}</b></div>`;
+  const sections=["s-consiglio","s-accordo","s-aste","s-perche","s-crit","s-decisione"];
+  if(!ok){ sections.forEach(id=>$(id).classList.add("hide")); $("s-dati").open=true; $("f-msg").className="msg err"; $("f-msg").textContent="Inserisci almeno il prezzo di partenza e il valore di mercato: la scheda si completa da sola."; return; }
+  sections.forEach(id=>$(id).classList.remove("hide")); $("f-msg").textContent="";
+  const a=analyse(c), n=Math.round(a.p*100), asta=a.v.rec==="asta";
+  $("s-consiglio").classList.toggle("acc",!asta);
+  $("v-title").innerHTML = asta ? `<span class="gt">Tentare l'asta</span>` : `Chiudere un accordo`;
+  $("v-sub").textContent = asta ? `In media si recuperano ${eurK(a.v.diff)} in più che con un accordo oggi.` : `Un accordo oggi fa recuperare in media ${eurK(a.v.diff)} in più che tentare l'asta.`;
+  $("v-p").textContent = n+"%"; const arc=$("v-arc"); arc.setAttribute("stroke", asta?"url(#gA)":"url(#gB)"); requestAnimationFrame(()=>arc.setAttribute("stroke-dasharray",`${(a.p*100).toFixed(1)} 100`));
+  $("v-ptext").innerHTML = `Su 100 aste di immobili come questo, <b>${n} trovano un compratore</b> e ${100-n} vanno deserte.`;
+  const mx=Math.max(a.v.ev,a.v.alt);
+  $("v-ways").innerHTML=`<div class="way ${asta?"win":""}"><b>Tentare l'asta${asta?'<span class="best">MIGLIORE</span>':""}</b><span class="amt">${eurK(a.v.ev)}</span><div class="bar"><i style="width:${(a.v.ev/mx*100).toFixed(1)}%"></i></div><span class="d">Se vende (${n} volte su 100): ${eurK(a.v.sold)} in circa 9 mesi. Se va deserta: ${eurK(a.v.des)} in circa 2 anni. In grande la media.</span></div>
+    <div class="way a ${asta?"":"win"}" style="margin-top:10px"><b>Chiudere un accordo${asta?"":'<span class="best">MIGLIORE</span>'}</b><span class="amt">${eurK(a.v.alt)}</span><div class="bar"><i class="a" style="width:${(a.v.alt/mx*100).toFixed(1)}%"></i></div><span class="d">Saldo e stralcio con il debitore o cessione del credito: circa il 70% del prezzo di partenza, sicuro, entro 3 mesi.</span></div>`;
+  /* grafici */
+  const P=path(c), within3=1-P.slice(0,3).reduce((m,q)=>m*(1-q.p),1);
+  $("c-steps").innerHTML=chartSteps(c);
+  $("f-steps").innerHTML=`Probabilità di vendere <b>entro il ${P[2].n}° tentativo: ${pct(within3)}</b>. Al ${P[2].n}° tentativo il prezzo di partenza sarebbe ${kEur(P[2].base)} (${pct(P[2].base/c.base)} di oggi), con circa un anno e mezzo di attesa in più.`;
+  drawOffer(c,a);
+  $("c-factors").innerHTML=chartFactors(factors(c));
+  /* criticità */
+  const items=[]; const ev=c.ev||{};
+  const has = re => (c.crit||[]).some(x=>re.test(x.t+" "+(x.q||"")));
+  if(c.occupato && !has(/occup|sgombero|liberaz/i)) items.push({t:"Immobile occupato: serve lo sgombero prima della consegna", q:ev.occupato});
+  if(c.abusi && !has(/abus|sanat|difform|demol|senza titolo/i)) items.push({t:"Abusi edilizi da sanare o demolire", q:ev.abusi});
+  if(c.manutenzione && !has(/lavor|manuten|infiltr|impiant|ristruttur/i)) items.push({t:"Lavori importanti a carico di chi compra", q:ev.manutenzione});
+  (c.crit||[]).forEach(x=>{ if(!items.some(i=>i.t===x.t)) items.push(x); });
+  if(c.extra>0 && !(c.crit||[]).some(x=>/\d[\d.]*\s*(euro|€)/i.test((x.q||"")+x.t))) items.push({t:`Costi indicati in perizia a carico di chi compra: circa ${eur(c.extra)}`, q:""});
+  if(c.deserte>0) items.push({t:`${c.deserte} ${c.deserte===1?"asta già andata deserta":"aste già andate deserte"}: il mercato ha già detto di no`, q:""});
+  $("crit").innerHTML = items.length ? items.map(x=>`<li><i aria-hidden="true">!</i><span>${esc(x.t)}${x.q?`<small>«${esc(x.q)}»</small>`:""}</span></li>`).join("") : `<li class="ok"><i aria-hidden="true">✓</i><span>Nessuna criticità rilevante trovata nella perizia.</span></li>`;
+  /* decisione */
+  const d=store.dec[c.id]; $("d-msg").className="msg"+(d?" good":""); $("d-msg").textContent = d ? (d.other?`Hai scelto l'altra strada${d.note?`: «${d.note}»`:""}.`:"Hai confermato il consiglio.") : "";
+}
+function drawOffer(c,a){ const off=parseFloat($("offer-in").value)||0; $("c-offer").innerHTML=chartOffer(c,a,off);
+  const f=$("f-offer");
+  if(off>0){ const good=off>=a.soglia; f.className="find"+(good?"":" a"); f.innerHTML = good ? `Un'offerta di <b>${eur(off)}</b> supera l'accordo minimo di ${eurK(a.soglia)}: <b>conviene accettarla</b>.` : `Un'offerta di <b>${eur(off)}</b> è sotto l'accordo minimo di ${eurK(a.soglia)}: <b>conviene tentare l'asta</b> o chiedere almeno ${eurK(a.soglia-off)} in più.`; }
+  else { f.className="find"; f.innerHTML=`Accetta un accordo solo da <b>${eurK(a.soglia)}</b> in su, cioè il ${pct(a.soglia/c.base)} del prezzo di partenza. Scrivi qui sopra un'offerta ricevuta per verificarla.`; } }
+$("offer-in").addEventListener("input",()=>{ const c=findCase(curId); if(c&&c.base>0&&c.mercato>0) drawOffer(c,analyse(c)); });
+["f-tipo","f-comune","f-trib","f-base","f-mercato","f-deserte","f-occ","f-abusi","f-man","f-zona"].forEach(id=>$(id).addEventListener(id.startsWith("f-")&&["f-comune","f-trib","f-base","f-mercato","f-deserte"].includes(id)?"input":"change",()=>{
+  const c=findCase(curId); if(!c) return; readForm(c); if(!c.demo) save(); renderSchedaBody(c); }));
+$("btn-print").addEventListener("click",()=>{ $("s-dati").open=true; $("ph-date").textContent="Scheda generata il "+dateOf(new Date().toISOString().slice(0,10)); try{ window.print(); }catch(e){} });
+$("btn-del").addEventListener("click",()=>{ const c=findCase(curId); if(!c||c.demo) return; if(!confirm(`Eliminare la scheda ${c.id}?`)) return; store.mine=store.mine.filter(x=>x.id!==c.id); delete store.dec[c.id]; save(); go("portafoglio"); });
+function decide(other){ const m=$("d-msg"); m.className="msg"; const c=findCase(curId); if(!c||!(c.base>0)) return;
+  const note=$("d-note").value.trim(); if(other&&!note){ m.className="msg err"; m.textContent="Scrivi il motivo prima di scegliere l'altra strada."; return; }
+  store.dec[c.id]={other,note,date:new Date().toISOString().slice(0,10)}; save(); $("d-note").value=""; renderSchedaBody(c); }
+$("btn-ok").addEventListener("click",()=>decide(false)); $("btn-other").addEventListener("click",()=>decide(true));
+
+/* portafoglio */
+let filter="all";
+function renderPortfolio(){
+  const rows=allCases().filter(c=>c.base>0&&c.mercato>0).map(c=>({c,a:analyse(c)}));
+  let nA=0,des=0,gain=0,tot=0; rows.forEach(({c,a})=>{ tot+=c.base; des+=1-a.p; if(a.v.rec==="asta") nA++; gain+=Math.max(a.v.ev,a.v.alt)-a.v.ev; });
+  const n=rows.length, nDec=rows.filter(r=>store.dec[r.c.id]).length, nMine=rows.filter(r=>!r.c.demo).length;
+  $("k1").textContent=n; $("k1s").textContent=`${nMine} ${nMine===1?"analizzata":"analizzate"} da te · ${n-nDec} da decidere`;
+  $("k3").textContent=`${Math.round(des)} su ${n}`;
+  if(!shown.portafoglio){ shown.portafoglio=true; countUp($("k2"),tot,v=>mln(v,2)); countUp($("k4"),gain,v=>"+"+eurK(v)); } else { $("k2").textContent=mln(tot,2); $("k4").textContent="+"+eurK(gain); }
+  $("d-n").textContent=n; $("d-a").textContent=nA; $("d-b").textContent=n-nA; $("d-c").textContent=nDec;
+  const pa=n?nA/n*100:0, gap=n&&nA&&nA<n?5:0;
+  $("arcB").setAttribute("stroke-dashoffset",(-pa).toFixed(2));
+  requestAnimationFrame(()=>{ $("arcA").setAttribute("stroke-dasharray",`${Math.max(0,pa-gap).toFixed(2)} 100`); $("arcB").setAttribute("stroke-dasharray",`${Math.max(0,100-pa-gap).toFixed(2)} 100`); });
+  $("c-cal").innerHTML=chartCal(rows);
+  const q=$("q").value.trim().toLowerCase();
+  const vis=rows.filter(({c,a})=>(filter==="all"||(filter==="todo"?!store.dec[c.id]:filter==="mine"?!c.demo:a.v.rec===filter)) && (!q||(c.comune+" "+c.trib+" "+c.tipo+" "+c.id).toLowerCase().includes(q)))
+    .sort((x,y)=>(x.c.demo-y.c.demo)||String(x.c.asta||"9").localeCompare(String(y.c.asta||"9")));
+  const incomplete=allCases().filter(c=>!(c.base>0&&c.mercato>0));
+  $("rows").innerHTML = vis.map(({c,a})=>`<tr data-open="${esc(c.id)}" tabindex="0">
+    <td><div class="im"><span class="ico"><svg><use href="#${ICON[c.tipo]||"i-home"}"/></svg></span><span><b>${esc(label(c))}</b><small>${c.trib?`Tribunale di ${esc(c.trib)}`:esc(c.id)}${c.rge?` · n. ${esc(c.rge)}`:""} ${c.demo?'<span class="tag ex">esempio</span>':'<span class="tag mine">tua</span>'}</small></span></div></td>
+    <td class="nw ch-hide">${c.asta?dateOf(c.asta):"–"}</td>
+    <td class="r nw ch-hide mono">${eur(c.base)}</td>
+    <td class="ch-hide"><div class="pb"><div class="bar"><i class="${a.v.rec==="asta"?"":"a"}" style="width:${(a.p*100).toFixed(1)}%"></i></div><span>${pct(a.p)}</span></div></td>
+    <td class="r nw ch-hide mono">${eurK(a.soglia)}</td>
+    <td>${a.v.rec==="asta"?'<span class="tag asta"><i></i>Asta</span>':'<span class="tag acc"><i></i>Accordo</span>'}</td><td class="ch-hide">${stTag(c.id)}</td></tr>`).join("")
+    + incomplete.map(c=>`<tr data-open="${esc(c.id)}" tabindex="0"><td><div class="im"><span class="ico"><svg><use href="#${ICON[c.tipo]||"i-home"}"/></svg></span><span><b>${esc(label(c))}</b><small>${esc(c.id)} <span class="tag mine">tua</span></small></span></div></td><td class="ch-hide">–</td><td class="ch-hide"></td><td class="ch-hide"></td><td class="ch-hide"></td><td><span class="tag wait"><i></i>Dati da completare</span></td><td class="ch-hide"></td></tr>`).join("")
+    || `<tr><td colspan="7" style="color:var(--text2)">Nessuna posizione con questi filtri.</td></tr>`;
+  $("btn-ex-toggle").textContent = store.hideEx ? "Mostra le posizioni di esempio" : "Nascondi le posizioni di esempio";
+}
+function chartCal(rows){
+  const by={}; rows.forEach(({c,a})=>{ if(!c.asta) return; const k=c.asta.slice(0,7); (by[k]=by[k]||{asta:0,acc:0})[a.v.rec]++; });
+  const keys=Object.keys(by).sort(); if(!keys.length) return `<p class="empty">Nessuna posizione con data d'asta.</p>`;
+  const W=560, H=220, l=30, r=10, t=16, b=40, bw=(W-l-r)/keys.length, max=Math.max(...keys.map(k=>by[k].asta+by[k].acc)), sy=v=>(H-t-b)*v/max;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Aste per mese divise per consiglio">`;
+  for(let v=0;v<=max;v++){ const y=H-b-sy(v); s+=`<line x1="${l}" x2="${W-r}" y1="${y}" y2="${y}" stroke="rgba(148,178,255,.08)"/><text x="${l-8}" y="${y+4}" text-anchor="end" font-size="11" fill="#8492B4">${v}</text>`; }
+  keys.forEach((k,i)=>{ const x=l+i*bw+bw*.22, w=bw*.56, h1=sy(by[k].asta), h2=sy(by[k].acc), y0=H-b;
+    if(h1) s+=`<rect x="${x}" y="${y0-h1}" width="${w}" height="${h1}" rx="5" fill="url(#gBarOn)"/>`;
+    if(h2) s+=`<rect x="${x}" y="${y0-h1-h2}" width="${w}" height="${h2-2}" rx="5" fill="url(#gB)"/>`;
+    const [y,m]=k.split("-"); s+=`<text x="${x+w/2}" y="${H-b+20}" text-anchor="middle" font-size="12" fill="#EEF3FF">${MESI.at(Number(m)-1)} ${y.slice(2)}</text>`;
+    s+=`<text x="${x+w/2}" y="${y0-h1-h2-8}" text-anchor="middle" font-size="12" font-weight="600" fill="#B4C1DE">${by[k].asta+by[k].acc}</text>`; });
+  return s+`</svg>`;
+}
+$("filt").addEventListener("click",e=>{ const b=e.target.closest("button[data-f]"); if(!b) return; filter=b.dataset.f; document.querySelectorAll("#filt button").forEach(x=>x.classList.toggle("on",x===b)); renderPortfolio(); });
+$("q").addEventListener("input",renderPortfolio);
+$("rows").addEventListener("click",e=>{ const id=e.target.closest("[data-open]")?.dataset.open; if(id) go("scheda/"+encodeURIComponent(id)); });
+$("rows").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const id=e.target.closest("[data-open]")?.dataset.open; if(id) go("scheda/"+encodeURIComponent(id)); } });
+$("btn-ex-toggle").addEventListener("click",()=>{ store.hideEx=!store.hideEx; save(); renderPortfolio(); });
+/* indice della scheda: evidenzia la domanda che stai leggendo */
+const tocLinks=[...document.querySelectorAll("#toc a")];
+function tocUpdate(){ if(!$("v-scheda").classList.contains("on")) return; let cur=tocLinks[0]; for(const a of tocLinks){ const el=$(a.dataset.to); if(el && !el.classList.contains("hide") && el.getBoundingClientRect().top<160) cur=a; } tocLinks.forEach(a=>a.classList.toggle("on",a===cur)); }
+window.addEventListener("scroll",tocUpdate,{passive:true});
+/* scorciatoie interne alla scheda */
+document.querySelectorAll("#v-scheda .jump a").forEach(a=>a.removeAttribute("data-go"));
+
+/* risultati */
+let I={};
+function evaluate(){ const s=1000/TEST.length; let fn=0,tp=0,val=0,va=0,mo=0,ma=0;
+  for(const row of TEST){ const V=row[7], des=row[8]===1, p=row[9], v=values(V,p), alt=v.ev<v.alt, act=des?v.des:v.sold; va+=act; ma+=(des?A.tDes:A.tSold)*12;
+    if(alt){ val+=v.alt; mo+=A.tAlt*12; if(des) tp++; } else { val+=act; mo+=(des?A.tDes:A.tSold)*12; if(des) fn++; } }
+  const n=TEST.length; return {desAsis:Math.round((fn+tp)*s), des:Math.round(fn*s), val:val*s, valAsis:va*s, mesi:Math.round(mo/n*10)/10, mesiAsis:Math.round(ma/n*10)/10}; }
+function vs(id,a,b,fmt,max){ $(id).innerHTML=`<div><span>Oggi</span><span class="bar"><i class="o" style="width:${(a/max*100).toFixed(1)}%"></i></span><b>${fmt(a)}</b></div><div><span>Con l'IA</span><span class="bar"><i style="width:${(b/max*100).toFixed(1)}%"></i></span><b>${fmt(b)}</b></div>`; }
+function renderImpact(){ const r=evaluate(), saved=r.desAsis-r.des, up=r.val-r.valAsis, dm=r.mesiAsis-r.mesi; I={saved,up,dm};
+  $("r-title").textContent=`${saved} aste inutili in meno e incassi ${f1(dm)} mesi prima.`;
+  $("c1b").textContent=`−${saved}`; $("c2b").textContent=`−${f1(dm)} mesi`; $("c3b").textContent=`+${mln(up,2)}`;
+  vs("c1",r.desAsis,r.des,v=>nf.format(v),r.desAsis); vs("c2",r.mesiAsis,r.mesi,v=>f1(v)+" mesi",r.mesiAsis); vs("c3",r.valAsis,r.val,v=>mln(v,1),r.val);
+  const time=1000*0.75*45, once=150000, year=60000;
+  $("money").innerHTML=`<div><small>Costo per costruirlo, una volta</small><b>${eur(once)}</b></div><div><small>Costo per mantenerlo, ogni anno</small><b>${eur(year)}</b></div><div class="plus"><small>Guadagno netto il primo anno</small><b>+${mln(up+time-year-once,2)}</b></div><div class="plus"><small>Guadagno netto dal secondo anno</small><b>+${mln(up+time-year,2)}</b></div>`; }
+function animateImpact(){ countUp($("c1b"),I.saved,v=>"−"+Math.round(v)); countUp($("c2b"),I.dm,v=>"−"+f1(v)+" mesi"); countUp($("c3b"),I.up,v=>"+"+mln(v,2)); }
+
+/* avvio */
+renderImpact(); aiState(); show(); detectAI();
+</script>
+</body>
+</html>
